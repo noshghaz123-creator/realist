@@ -3,9 +3,8 @@
   "installCommand": "npm install --prefix frontend",
   "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "handle": "filesystem" },
     {
-      "source": "/((?!api/|assets/).*)",
+      "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }
   ],
