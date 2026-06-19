@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { formatMoney, statusLabel, statusColors } from '../../utils/format';
@@ -28,7 +27,7 @@ export default function Overview() {
 
   return (
     <DashboardLayout title="Overview">
-      <h1 className="text-2xl font-bold">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
+      <h1 className="text-xl sm:text-2xl font-bold">{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
       <p className="text-gray-500 mt-1">Here's your lead activity overview.</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
@@ -99,8 +98,6 @@ export default function Overview() {
           </div>
         </div>
       </div>
-
-      <AttomPropertyFeed variant="dashboard" className="mt-8" />
     </DashboardLayout>
   );
 }

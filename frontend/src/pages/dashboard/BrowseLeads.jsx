@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import LeadRow from '../../components/LeadRow';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
@@ -83,14 +82,6 @@ export default function BrowseLeads() {
           ))
         )}
       </div>
-
-      <AttomPropertyFeed
-        variant="dashboard"
-        limit={3}
-        className="mt-8"
-        title="Market Intelligence"
-        description="Compare marketplace leads with live BatchData property records in your target areas."
-      />
     </DashboardLayout>
   );
 }

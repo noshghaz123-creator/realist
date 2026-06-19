@@ -4,6 +4,7 @@ import {
   AlertTriangle, MapPin, ExternalLink,
 } from 'lucide-react';
 import { api } from '../api/client';
+import { getSampleForCategory } from '../data/sampleProperties';
 import { formatPrice } from '../utils/format';
 
 const FILTER_ICONS = {
@@ -78,14 +79,24 @@ export default function AttomPropertyFeed({
     api
       .getAttomProperties(category, limit)
       .then((data) => {
-        setProperties(data.properties || []);
-        setSource(data.source || 'batchdata');
-        setLive(Boolean(data.live));
-        setMessage(data.message || null);
+        const props = data.properties || [];
+        if (props.length > 0) {
+          setProperties(props);
+          setSource(data.source || 'batchdata');
+          setLive(Boolean(data.live));
+          setMessage(data.message || null);
+        } else {
+          setProperties(getSampleForCategory(category, limit));
+          setSource('sample');
+          setLive(false);
+          setMessage('Live BatchData unavailable — showing sample properties.');
+        }
       })
       .catch(() => {
-        setProperties([]);
-        setMessage('Unable to load property data. Start the backend server.');
+        setProperties(getSampleForCategory(category, limit));
+        setSource('sample');
+        setLive(false);
+        setMessage('Unable to reach API — showing sample properties.');
       })
       .finally(() => setLoading(false));
   }, [category, limit]);
@@ -126,8 +137,19 @@ export default function AttomPropertyFeed({
             </div>
           ) : (
             <>
-              <span className="section-badge">BatchData Property Data</span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+                <span className="section-badge">BatchData Property Data</span>
+                {live && properties.length ? (
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100">
+                    Live
+                  </span>
+                ) : properties.length ? (
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">
+                    Sample Data
+                  </span>
+                ) : null}
+              </div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
                 Distressed Property Records
               </h2>
               <p>
@@ -147,7 +169,7 @@ export default function AttomPropertyFeed({
           )}
         </div>
 
-        <div className={`flex flex-wrap gap-2 mb-6 ${isDashboard ? '' : 'justify-center'}`}>
+        <div className={`flex flex-wrap gap-2 mb-6 ${isDashboard ? '' : 'justify-center px-1'}`}>
           {filters.map((f) => (
             <button
               key={f.id}

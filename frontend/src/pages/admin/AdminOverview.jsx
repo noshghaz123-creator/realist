@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DollarSign, Users, FileText, Shield } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { api } from '../../api/client';
 import { formatMoney } from '../../utils/format';
 
@@ -18,7 +17,7 @@ export default function AdminOverview() {
 
   return (
     <DashboardLayout title="Admin Overview" panel="admin">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Admin Overview</h1>
           <p className="text-gray-500 mt-1">Platform performance at a glance.</p>
@@ -75,8 +74,6 @@ export default function AdminOverview() {
           </div>
         </div>
       </div>
-
-      <AttomPropertyFeed variant="dashboard" className="mt-8" />
     </DashboardLayout>
   );
 }

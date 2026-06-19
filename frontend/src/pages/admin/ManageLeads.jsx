@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { api } from '../../api/client';
 import { formatPrice, typeLabel } from '../../utils/format';
 
@@ -56,7 +55,7 @@ export default function ManageLeads({ panel = 'admin' }) {
 
   return (
     <DashboardLayout title="Manage Leads" panel={panel}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Manage Leads</h1>
           <p className="text-gray-500 mt-1">{leads.length} leads in the system.</p>
@@ -98,8 +97,8 @@ export default function ManageLeads({ panel = 'admin' }) {
         </form>
       )}
 
-      <div className="mt-6 bg-white rounded-2xl border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="mt-6 bg-white rounded-2xl border overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
             <tr>
               <th className="px-6 py-3">Location</th>
@@ -131,14 +130,6 @@ export default function ManageLeads({ panel = 'admin' }) {
           </tbody>
         </table>
       </div>
-
-      <AttomPropertyFeed
-        variant="dashboard"
-        limit={3}
-        className="mt-8"
-        title="BatchData Reference Data"
-        description="Use live property records when creating or validating marketplace leads."
-      />
     </DashboardLayout>
   );
 }

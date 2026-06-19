@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Heart, Lock, MapPin, Phone, User } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { formatPrice, tierLabel, typeLabel } from '../../utils/format';
@@ -119,14 +118,6 @@ export default function LeadDetail() {
           </div>
         )}
       </div>
-
-      <AttomPropertyFeed
-        variant="dashboard"
-        limit={3}
-        className="mt-8"
-        title="Market Comparison"
-        description="Live BatchData records for similar distressed properties in South Florida."
-      />
     </DashboardLayout>
   );
 }

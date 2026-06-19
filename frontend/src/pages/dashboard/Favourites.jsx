@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import LeadRow from '../../components/LeadRow';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
@@ -43,14 +42,6 @@ export default function Favourites() {
           ))}
         </div>
       )}
-
-      <AttomPropertyFeed
-        variant="dashboard"
-        limit={3}
-        className="mt-8"
-        title="Market Context"
-        description="Review live BatchData records while evaluating your saved leads."
-      />
     </DashboardLayout>
   );
 }

@@ -1,4 +1,6 @@
-const API = import.meta.env.VITE_API_URL || '/api';
+const API =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://realist-production.up.railway.app/api' : '/api');
 
 const getToken = () => {
   try {

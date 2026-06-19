@@ -18,8 +18,8 @@ export default function ManageUsers() {
       <h1 className="text-2xl font-bold">Users</h1>
       <p className="text-gray-500 mt-1">{users.length} registered users.</p>
 
-      <div className="mt-6 bg-white rounded-2xl border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="mt-6 bg-white rounded-2xl border overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
             <tr>
               <th className="px-6 py-3">Name</th>

@@ -1,4 +1,9 @@
 {
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://realist-production.up.railway.app/api"
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!assets/).*)",

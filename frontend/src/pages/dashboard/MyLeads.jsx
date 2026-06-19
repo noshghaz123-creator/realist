@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Home, CheckCircle, Clock, DollarSign, User, Phone, MapPin, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
-import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { api } from '../../api/client';
 import { formatMoney, formatPrice, statusLabel, statusColors } from '../../utils/format';
 
@@ -46,7 +45,7 @@ export default function MyLeads() {
         ))}
       </div>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <input value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           onKeyDown={(e) => e.key === 'Enter' && load()}
           placeholder="Search by city, state, owner..." className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm" />
@@ -61,8 +60,8 @@ export default function MyLeads() {
 
       <div className="mt-6 space-y-4">
         {purchases.map((p) => (
-          <div key={p._id} className="bg-white rounded-2xl border border-gray-100 p-6">
-            <div className="flex items-start justify-between">
+          <div key={p._id} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-bold text-lg">{p.lead?.city}, {p.lead?.state}</h3>
@@ -74,7 +73,7 @@ export default function MyLeads() {
                   {p.lead?.propertyType} · {p.lead?.beds}bd/{p.lead?.baths}ba · {formatPrice(p.lead?.estValue)} est. · ARV {formatPrice(p.lead?.arv)}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <p className="font-bold text-lg">${p.amount}</p>
                 <p className="text-xs text-gray-400">{new Date(p.createdAt).toLocaleDateString()}</p>
               </div>
@@ -92,7 +91,7 @@ export default function MyLeads() {
               </p>
             )}
 
-            <div className="mt-4 flex gap-4">
+            <div className="mt-4 flex flex-wrap gap-3">
               <button onClick={() => {
                 const s = prompt('New status (contacted, in_progress, closed):', p.dealStatus);
                 if (s) updateStatus(p._id, s);
@@ -102,14 +101,6 @@ export default function MyLeads() {
           </div>
         ))}
       </div>
-
-      <AttomPropertyFeed
-        variant="dashboard"
-        limit={3}
-        className="mt-8"
-        title="Comparable Market Data"
-        description="Cross-check your purchased leads against live foreclosure, mortgage, and equity signals."
-      />
     </DashboardLayout>
   );
 }
