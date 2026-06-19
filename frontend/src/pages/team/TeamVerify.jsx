@@ -44,7 +44,7 @@ export default function TeamVerify() {
         limit={3}
         className="mt-8"
         title="Verification Reference"
-        description="Compare pending leads against live ATTOM foreclosure, ownership, and mortgage data."
+        description="Compare pending leads against live BatchData foreclosure, ownership, and mortgage data."
       />
     </DashboardLayout>
   );

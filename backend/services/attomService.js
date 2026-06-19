@@ -144,21 +144,62 @@ async function enrichProperty(prop) {
 
   const extras = {};
   try {
-    const [fc, eq] = await Promise.all([
-      attomFetch('/preforeclosuredetails', { attomId }).catch(() => null),
-      attomFetch('/valuation/homeequity', { ID: attomId }).catch(() => null),
+    const [fc, eq, hist] = await Promise.all([
+      attomFetch('/preforeclosuredetails', { ATTOMID: String(attomId) }).catch(() =>
+        attomFetch('/preforeclosuredetails', { attomId: String(attomId) }).catch(() => null)
+      ),
+      attomFetch('/valuation/homeequity', { ID: String(attomId) }).catch(() => null),
+      attomFetch('/saleshistory/expandedhistory', { attomId: String(attomId) }).catch(() => null),
     ]);
+
     const fcProp = fc?.property?.[0] || fc?.foreclosure?.[0];
     if (fcProp) {
       extras.foreclosure = fcProp.auction || fcProp.default || fcProp;
-      extras.distressType = fcProp.default?.distressType;
+      extras.distressType = fcProp.default?.distressType || fcProp.distressType;
     }
+
+    const history = hist?.property?.[0]?.saleHistory || hist?.property?.[0]?.foreclosure || [];
+    const historyList = Array.isArray(history) ? history : [history].filter(Boolean);
+    for (const entry of historyList) {
+      const fcEntry = entry?.foreclosure || entry;
+      if (fcEntry?.auctionDateTime || fcEntry?.delinquentAmount || fcEntry?.distressType) {
+        extras.foreclosure = { ...extras.foreclosure, ...fcEntry };
+        extras.distressType = extras.distressType || fcEntry.distressType;
+        break;
+      }
+    }
+
     const eqProp = eq?.property?.[0] || eq?.homeEquity?.[0];
     if (eqProp) extras.equity = eqProp.homeEquity || eqProp;
   } catch {
     /* enrichment optional */
   }
   return normalizeAttomProperty(prop, extras);
+}
+
+async function scanAttomForCategory(category, cap) {
+  const scanPerZip = category === 'all' ? cap + 2 : Math.min(cap * 10, 50);
+  const collected = [];
+
+  for (const zip of FL_ZIPS) {
+    const data = await attomFetch('/property/detailmortgageowner', {
+      postalCode: zip,
+      pagesize: String(scanPerZip),
+    });
+    const rawList = data?.property || [];
+    if (!rawList.length) continue;
+
+    for (const prop of rawList) {
+      const normalized = await enrichProperty(prop);
+      const matches =
+        category === 'all' ? true : normalized.categories.includes(category);
+      if (matches) collected.push(normalized);
+      if (collected.length >= cap) break;
+    }
+    if (collected.length >= cap) break;
+  }
+
+  return collected.slice(0, cap);
 }
 
 export async function getAttomProperties({ category = 'all', limit = 6 } = {}) {
@@ -179,23 +220,23 @@ export async function getAttomProperties({ category = 'all', limit = 6 } = {}) {
   }
 
   try {
-    const zip = FL_ZIPS[Math.floor(Math.random() * FL_ZIPS.length)];
-    const data = await attomFetch('/property/detailmortgageowner', {
-      postalCode: zip,
-      pagesize: String(cap + 2),
-    });
-
-    const rawList = data?.property || [];
-    if (!rawList.length) throw new Error('No properties returned from ATTOM');
-
-    const enriched = await Promise.all(rawList.slice(0, cap).map((p) => enrichProperty(p)));
-    const filtered =
-      category === 'all'
-        ? enriched
-        : enriched.filter((p) => p.categories.includes(category));
+    const properties = await scanAttomForCategory(category, cap);
+    if (!properties.length && category !== 'all') {
+      return {
+        properties: [],
+        source: 'attom',
+        live: true,
+        message:
+          category === 'foreclosure'
+            ? 'No foreclosure records on your ATTOM plan. Add PROPRELAY_API_KEY for live foreclosure data ($99/mo at proprelay.com).'
+            : category === 'bankruptcy'
+              ? 'No bankruptcy records on your ATTOM plan. Add BANKRUPTCY_OBSERVER_TOKEN for business bankruptcy data.'
+              : 'No live records found for this filter.',
+      };
+    }
 
     return {
-      properties: filtered.slice(0, cap),
+      properties,
       source: 'attom',
       live: true,
       message: null,

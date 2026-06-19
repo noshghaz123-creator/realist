@@ -155,8 +155,8 @@ export default function Home() {
                 <button onClick={() => navigate('/auth?mode=signup')} className="btn-primary">
                   Start Free Trial <ArrowRight size={18} />
                 </button>
-                <button onClick={() => navigate('/#attom-properties')} className="btn-secondary">
-                  View Sample Leads
+                <button onClick={() => navigate('/#property-data')} className="btn-secondary">
+                  View Property Data
                 </button>
               </div>
               <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">

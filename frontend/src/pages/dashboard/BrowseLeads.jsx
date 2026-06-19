@@ -89,7 +89,7 @@ export default function BrowseLeads() {
         limit={3}
         className="mt-8"
         title="Market Intelligence"
-        description="Compare marketplace leads with live ATTOM distressed property records in your target areas."
+        description="Compare marketplace leads with live BatchData property records in your target areas."
       />
     </DashboardLayout>
   );

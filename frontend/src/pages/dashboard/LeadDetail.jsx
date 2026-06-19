@@ -125,7 +125,7 @@ export default function LeadDetail() {
         limit={3}
         className="mt-8"
         title="Market Comparison"
-        description="Live ATTOM records for similar distressed properties in South Florida."
+        description="Live BatchData records for similar distressed properties in South Florida."
       />
     </DashboardLayout>
   );

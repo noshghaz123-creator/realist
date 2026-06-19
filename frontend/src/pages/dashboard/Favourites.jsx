@@ -49,7 +49,7 @@ export default function Favourites() {
         limit={3}
         className="mt-8"
         title="Market Context"
-        description="Review live ATTOM records while evaluating your saved leads."
+        description="Review live BatchData records while evaluating your saved leads."
       />
     </DashboardLayout>
   );

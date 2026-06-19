@@ -136,7 +136,7 @@ export default function ManageLeads({ panel = 'admin' }) {
         variant="dashboard"
         limit={3}
         className="mt-8"
-        title="ATTOM Reference Data"
+        title="BatchData Reference Data"
         description="Use live property records when creating or validating marketplace leads."
       />
     </DashboardLayout>

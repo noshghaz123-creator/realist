@@ -57,7 +57,8 @@ export default function AttomPropertyFeed({
   const [filters, setFilters] = useState([{ id: 'all', label: 'All Properties', icon: Building2 }]);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState('demo');
+  const [source, setSource] = useState('batchdata');
+  const [live, setLive] = useState(false);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
@@ -78,7 +79,8 @@ export default function AttomPropertyFeed({
       .getAttomProperties(category, limit)
       .then((data) => {
         setProperties(data.properties || []);
-        setSource(data.source || 'demo');
+        setSource(data.source || 'batchdata');
+        setLive(Boolean(data.live));
         setMessage(data.message || null);
       })
       .catch(() => {
@@ -100,39 +102,39 @@ export default function AttomPropertyFeed({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="font-semibold text-lg text-slate-900">
-                  {title || 'ATTOM Property Intelligence'}
+                  {title || 'BatchData Property Intelligence'}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  {description || 'Live distressed property records — foreclosure, mortgage, ownership & equity.'}
+                  {description || 'Live property records — foreclosure, mortgage, ownership & equity.'}
                 </p>
               </div>
               <span
                 className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-                  source === 'attom'
+                  source === 'batchdata' && live && properties.length
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                     : 'bg-amber-50 text-amber-700 border-amber-100'
                 }`}
               >
-                {source === 'attom' ? 'Live ATTOM' : 'Sample data'}
+                {source === 'batchdata' && live && properties.length ? 'Live BatchData' : 'BatchData'}
               </span>
             </div>
           ) : (
             <>
-              <span className="section-badge">ATTOM Property Data</span>
+              <span className="section-badge">BatchData Property Data</span>
               <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                 Distressed Property Records
               </h2>
               <p>
                 South Florida properties with{' '}
                 <strong className="text-slate-700">foreclosure, bankruptcy, mortgage, ownership & equity</strong>{' '}
-                data — integrated via{' '}
+                data — powered by{' '}
                 <a
-                  href="https://www.attomdata.com/solutions/delivery/property-data-api/"
+                  href="https://batchdata.io/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-teal-600 font-semibold hover:underline inline-flex items-center gap-1"
                 >
-                  ATTOM Property Data API <ExternalLink size={14} />
+                  BatchData API <ExternalLink size={14} />
                 </a>
               </p>
             </>
@@ -157,7 +159,7 @@ export default function AttomPropertyFeed({
         </div>
 
         {message && (
-          <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700 text-center">
+          <div className="mb-6 px-4 py-3 rounded-xl border text-sm text-center bg-amber-50 border-amber-100 text-amber-800">
             {message}
           </div>
         )}
@@ -256,9 +258,9 @@ export default function AttomPropertyFeed({
 
         {!isDashboard && (
           <p className="text-center text-xs text-slate-400 mt-6">
-            {source === 'attom'
-              ? 'Live data from ATTOM Property Data API'
-              : 'South Florida dataset · ATTOM API schema · 10 properties'}
+            {source === 'batchdata' && live && properties.length
+              ? 'Live property data from BatchData API'
+              : 'Property data via BatchData — Florida markets'}
           </p>
         )}
     </>
@@ -269,7 +271,7 @@ export default function AttomPropertyFeed({
   }
 
   return (
-    <Wrapper id="attom-properties" className={wrapperClass}>
+    <Wrapper id="property-data" className={wrapperClass}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{content}</div>
     </Wrapper>
   );
