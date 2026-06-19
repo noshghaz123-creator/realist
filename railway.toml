@@ -1,0 +1,7 @@
+[build]
+buildCommand = "npm install --prefix backend --omit=dev --no-fund --no-audit"
+
+[deploy]
+startCommand = "node backend/server.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
