@@ -110,12 +110,18 @@ export default function AttomPropertyFeed({
               </div>
               <span
                 className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
-                  source === 'batchdata' && live && properties.length
+                  live && properties.length
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                    : 'bg-amber-50 text-amber-700 border-amber-100'
+                    : properties.length
+                      ? 'bg-amber-50 text-amber-700 border-amber-100'
+                      : 'bg-slate-50 text-slate-600 border-slate-100'
                 }`}
               >
-                {source === 'batchdata' && live && properties.length ? 'Live BatchData' : 'BatchData'}
+                {live && properties.length
+                  ? 'Live BatchData'
+                  : properties.length
+                    ? 'Sample Data'
+                    : 'BatchData'}
               </span>
             </div>
           ) : (
@@ -258,9 +264,11 @@ export default function AttomPropertyFeed({
 
         {!isDashboard && (
           <p className="text-center text-xs text-slate-400 mt-6">
-            {source === 'batchdata' && live && properties.length
+            {live && properties.length
               ? 'Live property data from BatchData API'
-              : 'Property data via BatchData — Florida markets'}
+              : properties.length
+                ? 'Sample property data — live BatchData unavailable'
+                : 'Property data via BatchData — Florida markets'}
           </p>
         )}
     </>
