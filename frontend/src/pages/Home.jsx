@@ -8,6 +8,7 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AttomPropertyFeed from '../components/AttomPropertyFeed';
+import HorizontalScrollRow from '../components/HorizontalScrollRow';
 import { api } from '../api/client';
 import { formatMoney, formatPrice, typeLabel, tierLabel } from '../utils/format';
 import {
@@ -47,6 +48,37 @@ const testimonials = [
 ];
 
 const tierClass = { basic: 'tier-basic', qualified: 'tier-qualified', premium: 'tier-premium' };
+
+function MobileLeadCard({ lead }) {
+  return (
+    <article className="snap-start shrink-0 w-[min(82vw,300px)] rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-semibold text-slate-900 truncate">{lead.city}, {lead.state}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{lead.propertyType} · {lead.beds}bd/{lead.baths}ba</p>
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${tierClass[lead.tier] || 'tier-basic'}`}>
+          {tierLabel(lead.tier)}
+        </span>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className="text-[11px] font-medium px-2 py-1 rounded-lg bg-slate-100 text-slate-600 capitalize">
+          {typeLabel(lead.leadType)}
+        </span>
+      </div>
+      <div className="mt-3 pt-3 border-t border-slate-100 flex items-end justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Est. / ARV</p>
+          <p className="text-sm font-semibold text-slate-800 truncate">
+            {formatPrice(lead.estValue)}
+            <span className="text-emerald-600 ml-1">· {formatPrice(lead.arv)}</span>
+          </p>
+        </div>
+        <p className="text-lg font-bold text-slate-900 shrink-0">${lead.price}</p>
+      </div>
+    </article>
+  );
+}
 
 function HeroPreview() {
   return (
@@ -129,37 +161,38 @@ export default function Home() {
       ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
 
       {/* Hero */}
       <section className="hero-mesh relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-14 lg:pt-16 lg:pb-20">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 sm:pt-12 sm:pb-14 lg:pt-16 lg:pb-20">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-slate-200/80 shadow-sm text-sm text-slate-600 mb-6 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 border border-slate-200/80 shadow-sm text-xs sm:text-sm text-slate-600 mb-4 sm:mb-6 backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot" />
                 <span className="font-medium">New verified leads added daily</span>
                 <ArrowRight size={14} className="text-slate-400" />
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold leading-[1.1] tracking-tight text-slate-900">
+              <h1 className="text-3xl sm:text-5xl lg:text-[3.5rem] font-extrabold leading-[1.12] sm:leading-[1.1] tracking-tight text-slate-900">
                 Find Premium{' '}
                 <span className="text-gradient">Real Estate Leads</span>
-                <br />
+                <br className="hidden sm:block" />
+                <span className="sm:hidden"> </span>
                 Close More Deals.
               </h1>
-              <p className="mt-5 text-lg text-slate-500 leading-relaxed max-w-xl">
+              <p className="mt-3 sm:mt-5 text-base sm:text-lg text-slate-500 leading-relaxed max-w-xl">
                 {MISSION} Based in <strong className="text-slate-700">{GEO_FOCUS.primary}</strong>, expanding across the U.S. — pre-qualified off-market leads, not just raw data.
               </p>
-              <div className="mt-7 flex flex-wrap gap-4">
-                <button onClick={() => navigate('/auth?mode=signup')} className="btn-primary">
+              <div className="mt-5 sm:mt-7 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+                <button onClick={() => navigate('/auth?mode=signup')} className="btn-primary w-full sm:w-auto justify-center">
                   Start Free Trial <ArrowRight size={18} />
                 </button>
-                <button onClick={() => navigate('/#property-data')} className="btn-secondary">
+                <button onClick={() => navigate('/#property-data')} className="btn-secondary w-full sm:w-auto justify-center">
                   View Property Data
                 </button>
               </div>
-              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
+              <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-x-6 sm:gap-y-2 text-xs sm:text-sm text-slate-500">
                 {['No contracts', 'Cancel anytime', 'Verified leads guaranteed'].map((t) => (
                   <span key={t} className="flex items-center gap-2 font-medium">
                     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100">
@@ -178,13 +211,13 @@ export default function Home() {
       </section>
 
       {/* Stats */}
-      <section className="relative -mt-6 z-10 pb-2">
+      <section className="relative -mt-4 sm:-mt-6 z-10 pb-1 sm:pb-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-5">
             {statCards.map(([v, l]) => (
-              <div key={l} className="bg-white rounded-2xl border border-slate-100 p-5 lg:p-6 text-center shadow-lg shadow-slate-900/5 card-lift">
-                <p className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">{v}</p>
-                <p className="text-sm text-slate-500 mt-2 font-medium">{l}</p>
+              <div key={l} className="bg-white rounded-xl sm:rounded-2xl border border-slate-100 p-3 sm:p-5 lg:p-6 text-center shadow-lg shadow-slate-900/5 card-lift">
+                <p className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">{v}</p>
+                <p className="text-[11px] sm:text-sm text-slate-500 mt-1 sm:mt-2 font-medium leading-tight">{l}</p>
               </div>
             ))}
           </div>
@@ -197,23 +230,38 @@ export default function Home() {
       <section className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="section-header">
           <span className="section-badge">Live Marketplace</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
             Available Leads Right Now
           </h2>
           <p>South Florida leads live now — unlock seller contact, ARV & repair analysis.</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-900/5 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1.5fr_1fr_0.8fr_1fr_0.7fr] gap-4 px-8 py-4 bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+        {/* Mobile: horizontal scroll + arrows */}
+        <div className="md:hidden">
+          {leads.length === 0 ? (
+            <div className="py-10 text-center text-slate-400 text-sm">Loading leads...</div>
+          ) : (
+            <HorizontalScrollRow className="px-3" trackClassName="pb-1 -mx-1 px-1">
+              {leads.map((lead) => (
+                <MobileLeadCard key={lead._id} lead={lead} />
+              ))}
+            </HorizontalScrollRow>
+          )}
+          <p className="mt-2 text-center text-[11px] text-slate-400 font-medium">Swipe or use arrows to browse leads</p>
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-900/5 overflow-hidden">
+          <div className="grid grid-cols-[1.5fr_1fr_0.8fr_1fr_0.7fr] gap-4 px-8 py-4 bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
             <span>Lead</span><span>Type</span><span>Tier</span><span>Est. Value / ARV</span><span>Price</span>
           </div>
           {leads.map((lead, i) => (
             <div
               key={lead._id}
-              className={`grid grid-cols-1 md:grid-cols-[1.5fr_1fr_0.8fr_1fr_0.7fr] gap-3 md:gap-4 px-6 md:px-8 py-5 items-center transition-colors hover:bg-slate-50/60 ${i > 0 ? 'border-t border-slate-50' : ''}`}
+              className={`grid grid-cols-[1.5fr_1fr_0.8fr_1fr_0.7fr] gap-4 px-8 py-5 items-center transition-colors hover:bg-slate-50/60 ${i > 0 ? 'border-t border-slate-50' : ''}`}
             >
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex w-10 h-10 rounded-xl bg-slate-100 items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
                   <HomeIcon size={18} className="text-slate-500" />
                 </div>
                 <div>
@@ -238,7 +286,7 @@ export default function Home() {
         </div>
         <button
           onClick={() => navigate('/auth?mode=signup')}
-          className="mt-6 w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50/30 transition-all"
+          className="mt-4 sm:mt-6 w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50/30 transition-all"
         >
           Sign up to unlock full lead details →
         </button>
@@ -249,25 +297,39 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="section-header">
             <span className="section-badge">Lead Types</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
               Every Category of Motivated Seller
             </h2>
             <p>High-value distressed property leads — what separates us from basic data sellers.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="sm:hidden -mx-4 px-4">
+            <div className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1">
+              {HIGH_VALUE_LEADS.map((l) => (
+                <div
+                  key={l.type}
+                  className="snap-start shrink-0 w-[min(70vw,240px)] bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm"
+                >
+                  <h3 className="font-bold text-sm text-slate-900 leading-snug">{l.label}</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-3">{l.desc}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-center text-[11px] text-slate-400 font-medium">Swipe to see all lead types</p>
+          </div>
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {HIGH_VALUE_LEADS.map((l) => (
-              <div key={l.type} className="bg-white p-6 rounded-2xl border border-slate-100 card-lift">
+              <div key={l.type} className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-100 card-lift">
                 <h3 className="font-bold text-slate-900">{l.label}</h3>
                 <p className="text-sm text-slate-500 mt-2 leading-relaxed">{l.desc}</p>
               </div>
             ))}
           </div>
-          <div className="mt-8 p-6 lg:p-7 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white">
-            <h3 className="text-xl font-bold">Premium Leads — Where the Real Money Is Made</h3>
-            <ul className="mt-4 grid sm:grid-cols-3 gap-4">
+          <div className="mt-4 sm:mt-8 p-4 sm:p-6 lg:p-7 rounded-xl sm:rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white">
+            <h3 className="text-base sm:text-xl font-bold">Premium Leads — Where the Real Money Is Made</h3>
+            <ul className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
               {PREMIUM_LEAD_TRAITS.map((t) => (
-                <li key={t} className="flex items-start gap-2 text-sm font-medium text-teal-50">
-                  <Check size={16} className="mt-0.5 shrink-0" />{t}
+                <li key={t} className="flex items-start gap-2 text-xs sm:text-sm font-medium text-teal-50">
+                  <Check size={14} className="mt-0.5 shrink-0 sm:w-4 sm:h-4" />{t}
                 </li>
               ))}
             </ul>
@@ -285,13 +347,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="section-header">
             <span className="section-badge">The System</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">How REALIST Works</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">How REALIST Works</h2>
             <p>From raw data to closed deal — a streamlined 6-step pipeline.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {steps.map((s) => (
-              <div key={s.n} className="group bg-white p-7 rounded-2xl border border-slate-100 card-lift">
-                <div className="flex items-center justify-between mb-5">
+              <div key={s.n} className="group bg-white p-5 sm:p-7 rounded-xl sm:rounded-2xl border border-slate-100 card-lift">
+                <div className="flex items-center justify-between mb-3 sm:mb-5">
                   <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
                     <s.icon size={20} className="text-teal-600" />
                   </div>
@@ -310,15 +372,15 @@ export default function Home() {
       <section id="features" className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="section-header">
           <span className="section-badge">Why REALIST</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
             Our Unique Selling Proposition
           </h2>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {features.map((f) => (
-            <div key={f.title} className="group p-7 rounded-2xl border border-slate-100 bg-white card-lift">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${f.color}`}>
-                <f.icon size={22} />
+            <div key={f.title} className="group p-5 sm:p-7 rounded-xl sm:rounded-2xl border border-slate-100 bg-white card-lift">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-5 ${f.color}`}>
+                <f.icon size={20} className="sm:w-[22px] sm:h-[22px]" />
               </div>
               <h3 className="font-bold text-lg text-slate-900">{f.title}</h3>
               <p className="text-sm text-slate-500 mt-2 leading-relaxed">{f.desc}</p>
@@ -332,18 +394,18 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="section-header">
             <span className="section-badge">Pricing</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Simple, Transparent Pricing</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Simple, Transparent Pricing</h2>
             <p>
             Per-lead: Basic {REVENUE_MODEL.perLead.basic.range} · Qualified {REVENUE_MODEL.perLead.qualified.range} · Exclusive {REVENUE_MODEL.perLead.exclusive.range}
           </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch">
             {plans.map((p) => (
               <div
                 key={p.name}
-                className={`relative bg-white p-8 lg:p-9 rounded-2xl border flex flex-col ${
+                className={`relative bg-white p-6 sm:p-8 lg:p-9 rounded-xl sm:rounded-2xl border flex flex-col ${
                   p.popular
-                    ? 'border-teal-200 pricing-glow scale-[1.02] z-10'
+                    ? 'border-teal-200 pricing-glow lg:scale-[1.02] z-10'
                     : 'border-slate-100 shadow-lg shadow-slate-900/5 card-lift'
                 }`}
               >
@@ -353,12 +415,12 @@ export default function Home() {
                   </span>
                 )}
                 <h3 className="font-bold text-xl text-slate-900">{p.name}</h3>
-                <div className="mt-4">
-                  <span className="text-5xl font-extrabold text-slate-900 tracking-tight">${p.price}</span>
+                <div className="mt-3 sm:mt-4">
+                  <span className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">${p.price}</span>
                   <span className="text-slate-500 font-medium">/month</span>
                 </div>
                 <p className="text-sm text-slate-500 mt-2 font-medium">{p.delivery}</p>
-                <ul className="mt-8 space-y-3.5 flex-1">
+                <ul className="mt-5 sm:mt-8 space-y-2.5 sm:space-y-3.5 flex-1">
                   {p.features.map((feat) => (
                     <li key={feat} className="flex items-center gap-3 text-sm text-slate-600">
                       <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 shrink-0">
@@ -391,19 +453,19 @@ export default function Home() {
       <section className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="section-header">
           <span className="section-badge">Testimonials</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Investors Love REALIST</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Investors Love REALIST</h2>
         </div>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
           {testimonials.map((t) => (
-            <div key={t.name} className="relative bg-white p-6 lg:p-7 rounded-2xl border border-slate-100 shadow-lg shadow-slate-900/5 card-lift">
-              <Quote size={32} className="text-teal-100 absolute top-6 right-6" />
-              <div className="flex gap-1 mb-5">
+            <div key={t.name} className="relative bg-white p-5 sm:p-6 lg:p-7 rounded-xl sm:rounded-2xl border border-slate-100 shadow-lg shadow-slate-900/5 card-lift">
+              <Quote size={28} className="text-teal-100 absolute top-4 right-4 sm:top-6 sm:right-6" />
+              <div className="flex gap-1 mb-3 sm:mb-5">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={16} className="fill-amber-400 text-amber-400" />
                 ))}
               </div>
               <p className="text-slate-600 leading-relaxed">"{t.quote}"</p>
-              <div className="mt-8 flex items-center gap-4 pt-6 border-t border-slate-100">
+              <div className="mt-5 sm:mt-8 flex items-center gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-100">
                 <div className="w-11 h-11 rounded-full bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
                   {t.initials}
                 </div>
@@ -419,21 +481,21 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="cta-gradient text-white py-16 lg:py-20 relative overflow-hidden">
+      <section className="cta-gradient text-white py-10 sm:py-16 lg:py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(13,148,136,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(59,130,246,0.3) 0%, transparent 50%)' }} />
         <div className="max-w-3xl mx-auto text-center px-4 relative">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Ready to Find Your Next Deal?</h2>
-          <p className="mt-4 text-slate-300 text-lg">Join 3,800+ investors using REALIST to find motivated sellers and close deals faster.</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">Ready to Find Your Next Deal?</h2>
+          <p className="mt-3 sm:mt-4 text-slate-300 text-base sm:text-lg">Join 3,800+ investors using REALIST to find motivated sellers and close deals faster.</p>
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
             <button
               onClick={() => navigate('/auth?mode=signup')}
-              className="px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 shadow-xl transition-all hover:-translate-y-0.5"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 shadow-xl transition-all hover:-translate-y-0.5"
             >
               Start Free Trial
             </button>
             <button
               onClick={() => navigate('/contact')}
-              className="px-8 py-4 border-2 border-white/30 rounded-xl font-bold hover:bg-white/10 transition-all"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 border-2 border-white/30 rounded-xl font-bold hover:bg-white/10 transition-all"
             >
               Contact Sales
             </button>

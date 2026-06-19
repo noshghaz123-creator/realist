@@ -52,7 +52,17 @@ export default function AttomPropertyFeed({
   description,
 }) {
   const isDashboard = variant === 'dashboard';
-  const limit = limitProp ?? (isDashboard ? 4 : 8);
+  const [viewportLimit, setViewportLimit] = useState(limitProp ?? (isDashboard ? 4 : 8));
+  const limit = limitProp ?? viewportLimit;
+
+  useEffect(() => {
+    if (limitProp != null) return;
+    const mq = window.matchMedia('(max-width: 639px)');
+    const apply = () => setViewportLimit(isDashboard ? 4 : mq.matches ? 4 : 8);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, [limitProp, isDashboard]);
 
   const [category, setCategory] = useState('all');
   const [filters, setFilters] = useState([{ id: 'all', label: 'All Properties', icon: Building2 }]);
@@ -169,19 +179,19 @@ export default function AttomPropertyFeed({
           )}
         </div>
 
-        <div className={`flex flex-wrap gap-2 mb-6 ${isDashboard ? '' : 'justify-center px-1'}`}>
+        <div className={`flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6 ${isDashboard ? '' : 'justify-center px-0 sm:px-1'}`}>
           {filters.map((f) => (
             <button
               key={f.id}
               onClick={() => setCategory(f.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+              className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all ${
                 category === f.id
                   ? 'bg-slate-900 text-white border-slate-900 shadow-md'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
               }`}
             >
-              <f.icon size={15} />
-              {f.label}
+              <f.icon size={14} className="sm:w-[15px] sm:h-[15px]" />
+              <span className="whitespace-nowrap">{f.label}</span>
             </button>
           ))}
         </div>
@@ -204,16 +214,16 @@ export default function AttomPropertyFeed({
         ) : properties.length === 0 ? (
           <div className="text-center py-16 text-slate-400">No properties found for this filter.</div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-2 gap-3 sm:gap-5">
             {properties.map((p) => (
               <article
                 key={p.id}
-                className="bg-white rounded-2xl border border-slate-200/80 shadow-lg shadow-slate-900/5 overflow-hidden card-lift"
+                className="bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-lg shadow-slate-900/5 overflow-hidden card-lift min-w-0"
               >
-                <div className="px-6 py-5 border-b border-slate-100">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-lg text-slate-900 leading-snug">
+                <div className="px-4 py-3 sm:px-6 sm:py-5 border-b border-slate-100">
+                  <div className="flex items-start justify-between gap-2 sm:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-base sm:text-lg text-slate-900 leading-snug">
                         {p.address}
                       </h3>
                       <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
@@ -247,7 +257,7 @@ export default function AttomPropertyFeed({
                   </div>
                 </div>
 
-                <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="px-4 py-3 sm:px-6 sm:py-5 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                   <DataCell label="Owner" value={p.owner?.name} />
                   <DataCell label="Mortgage Lender" value={p.mortgage?.lender} />
                   <DataCell
@@ -270,7 +280,7 @@ export default function AttomPropertyFeed({
                 </div>
 
                 {(p.foreclosure?.auctionDate || p.foreclosure?.defaultAmount) && (
-                  <div className="px-6 py-3 bg-red-50/60 border-t border-red-100 text-xs text-red-700 font-medium">
+                  <div className="px-4 py-2.5 sm:px-6 sm:py-3 bg-red-50/60 border-t border-red-100 text-xs text-red-700 font-medium">
                     {p.foreclosure.auctionDate && <>Auction: {p.foreclosure.auctionDate}</>}
                     {p.foreclosure.defaultAmount && (
                       <span className={p.foreclosure.auctionDate ? ' · ' : ''}>
