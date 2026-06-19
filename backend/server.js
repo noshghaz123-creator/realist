@@ -20,7 +20,12 @@ app.use(
   cors({
     origin(origin, callback) {
       const allowed = process.env.CLIENT_URL || 'http://localhost:5173';
-      if (!origin || origin === allowed || /\.vercel\.app$/.test(origin)) {
+      if (
+        !origin ||
+        origin === allowed ||
+        /\.vercel\.app$/.test(origin) ||
+        /^http:\/\/localhost:\d+$/.test(origin)
+      ) {
         callback(null, true);
       } else {
         callback(null, false);
@@ -44,9 +49,24 @@ app.use('/api/attom', attomRoutes);
 connectDB()
   .then(() => seedIfEmpty())
   .then(() => {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Stop the other backend process (Ctrl+C) and run npm run dev again.`);
+      } else {
+        console.error('Server error:', err.message);
+      }
+      process.exit(1);
+    });
   })
   .catch((err) => {
     console.error('DB connection failed:', err.message);
+    if (/authentication failed|bad auth/i.test(err.message)) {
+      console.error('Fix: Check MONGODB_URI username/password in backend/.env (Atlas → Database Access).');
+    } else if (/whitelist|IP/i.test(err.message)) {
+      console.error('Fix: Atlas → Network Access → Add IP → Allow Access from Anywhere (0.0.0.0/0).');
+    } else if (!process.env.MONGODB_URI) {
+      console.error('Fix: Add MONGODB_URI to backend/.env (MongoDB Atlas connection string).');
+    }
     process.exit(1);
   });
