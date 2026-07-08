@@ -305,7 +305,7 @@ export function mapPropertyRadarRecord(raw, { cacheKey, featured = false } = {})
     ownerOccupied: Boolean(pick(source, 'isSameMailingOrExempt', 'OwnerOccupied')),
     vacant: Boolean(pick(source, 'isSiteVacant', 'Vacant')),
     mlsStatus: pick(source, 'ListingStatus', 'MLSStatus', 'StatusLevel'),
-    taxStatus: pick(source, 'inTaxDelinquency', 'DelinquentYear', 'TaxStatus'),
+    taxStatus: pick(source, 'inTaxDelinquency', 'DelinquentYear', 'TaxStatus', 'TaxDelinquent'),
     preForeclosure: Boolean(pick(source, 'isPreforeclosure', 'PreForeclosure', 'inForeclosure')),
     bankruptcy: Boolean(pick(source, 'inBankruptcyProperty', 'isBankruptcy', 'Bankruptcy')),
     lienInformation: pick(source, 'PropertyHasOpenLiens', 'NumberLoans', 'LienCount')?.toString?.() ?? null,
@@ -324,7 +324,55 @@ export function mapPropertyRadarRecord(raw, { cacheKey, featured = false } = {})
   return mapped;
 }
 
-export function buildSearchCriteria(filters = {}) {
+export function hasDistressFilters(filters = {}) {
+  return ['preForeclosure', 'bankruptcy', 'taxDelinquent'].some(
+    (key) => filters[key] === true || filters[key] === 'true'
+  );
+}
+
+const DISTRESS_CRITERIA_MAP = [
+  ['preForeclosure', 'Preforeclosure'],
+  ['bankruptcy', 'Bankruptcy'],
+  ['taxDelinquent', 'TaxDelinquent'],
+];
+
+function isTruthyDistressFlag(val) {
+  if (val === true || val === 1 || val === '1') return true;
+  if (typeof val === 'string') {
+    const s = val.trim();
+    if (!s || /^(no|false|0|none)$/i.test(s)) return false;
+    return true;
+  }
+  return false;
+}
+
+export function matchesDistressPostFilters(mapped, filters = {}) {
+  if (filters.preForeclosure === true || filters.preForeclosure === 'true') {
+    if (!mapped.preForeclosure) return false;
+  }
+  if (filters.bankruptcy === true || filters.bankruptcy === 'true') {
+    if (!mapped.bankruptcy) return false;
+  }
+  if (filters.taxDelinquent === true || filters.taxDelinquent === 'true') {
+    const taxFlag =
+      mapped.taxStatus ??
+      pick(mapped.rawData || {}, 'inTaxDelinquency', 'DelinquentYear', 'TaxDelinquent');
+    if (!isTruthyDistressFlag(taxFlag)) return false;
+  }
+  return true;
+}
+
+function appendDistressCriteria(criteria, filters) {
+  const values = DISTRESS_CRITERIA_MAP.filter(
+    ([key]) => filters[key] === true || filters[key] === 'true'
+  ).map(([, label]) => label);
+
+  if (values.length) {
+    criteria.push({ name: 'InDistress', value: values });
+  }
+}
+
+export function buildSearchCriteria(filters = {}, { omitDistress = false } = {}) {
   const criteria = [];
 
   // Florida only — always enforced
@@ -403,14 +451,8 @@ export function buildSearchCriteria(filters = {}) {
   if (filters.vacant === true || filters.vacant === 'true') {
     criteria.push({ name: 'isSiteVacant', value: [1] });
   }
-  if (filters.preForeclosure === true || filters.preForeclosure === 'true') {
-    criteria.push({ name: 'isPreforeclosure', value: [1] });
-  }
-  if (filters.bankruptcy === true || filters.bankruptcy === 'true') {
-    criteria.push({ name: 'isBankruptcy', value: [1] });
-  }
-  if (filters.taxDelinquent === true || filters.taxDelinquent === 'true') {
-    criteria.push({ name: 'isDelinquent', value: [1] });
+  if (!omitDistress) {
+    appendDistressCriteria(criteria, filters);
   }
 
   return criteria;

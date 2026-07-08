@@ -12,6 +12,8 @@ import {
   qualifiesProperty,
   hasFullContact,
   contactScore,
+  hasDistressFilters,
+  matchesDistressPostFilters,
 } from '../utils/propertyRadarMapper.js';
 
 export const BROWSE_BATCH_SIZE = 10;
@@ -149,7 +151,8 @@ function resolveRadarIdFromRaw(raw) {
 
 /** Scan PropertyRadar until we collect `targetCount` qualified FL leads (prefer full contact) */
 async function fetchQualifiedRecords(filters, radarStart, targetCount = BROWSE_BATCH_SIZE) {
-  const criteria = buildSearchCriteria(filters);
+  let criteria = buildSearchCriteria(filters);
+  let postFilterDistress = false;
   const ranked = [];
   const seenIds = new Set();
   let start = radarStart;
@@ -159,12 +162,32 @@ async function fetchQualifiedRecords(filters, radarStart, targetCount = BROWSE_B
   let rawScanned = 0;
 
   while (ranked.length < targetCount && pages < MAX_SCAN_PAGES) {
-    const batch = await searchPropertyRadar({
-      criteria,
-      purchase: 1,
-      limit: API_FETCH_CHUNK,
-      start,
-    });
+    let batch;
+    try {
+      batch = await searchPropertyRadar({
+        criteria,
+        purchase: 1,
+        limit: API_FETCH_CHUNK,
+        start,
+      });
+    } catch (err) {
+      if (
+        !postFilterDistress &&
+        hasDistressFilters(filters) &&
+        /Unexpected Criterion/i.test(err.message)
+      ) {
+        postFilterDistress = true;
+        criteria = buildSearchCriteria(filters, { omitDistress: true });
+        batch = await searchPropertyRadar({
+          criteria,
+          purchase: 1,
+          limit: API_FETCH_CHUNK,
+          start,
+        });
+      } else {
+        throw err;
+      }
+    }
 
     apiUsage += batch.apiUsage || batch.results?.length || 0;
     totalAvailable = batch.totalCount || totalAvailable;
@@ -184,6 +207,9 @@ async function fetchQualifiedRecords(filters, radarStart, targetCount = BROWSE_B
       }
 
       if (!qualifiesProperty(preview, { trustFloridaSearch: true })) {
+        continue;
+      }
+      if (postFilterDistress && !matchesDistressPostFilters(preview, filters)) {
         continue;
       }
 
