@@ -1,13 +1,17 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { protect } from '../middleware/auth.js';
-import { PLAN_LEADS } from '../config/plans.js';
+import { TRIAL_LEAD_LIMIT } from '../services/leadQuotaService.js';
+import { createUserNotification } from '../services/notificationService.js';
 
 const router = express.Router();
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '7d' });
+
+const MIN_PASSWORD_LENGTH = 8;
 
 const sendUser = (user, res, status = 200) => {
   const token = signToken(user._id);
@@ -23,31 +27,65 @@ const sendUser = (user, res, status = 200) => {
       company: user.company,
       location: user.location,
       bio: user.bio,
+      avatar: user.avatar,
       favourites: user.favourites,
+      favouritePropertyLeads: user.favouritePropertyLeads,
+      myPropertyLeads: user.myPropertyLeads,
+      leadLimit: user.leadLimit,
+      leadsUsed: user.leadsUsed,
       leadsRemaining: user.leadsRemaining,
       preferences: user.preferences,
+      createdAt: user.createdAt,
     },
   });
 };
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, phone, company, location } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields required' });
     }
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: 'Email already registered' });
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists) {
+      return res.status(400).json({ message: 'An account with this email already exists. Please sign in.' });
+    }
 
-    const userRole = role === 'team' ? 'team' : 'buyer';
     const user = await User.create({
       name,
       email,
       password,
-      role: userRole,
-      plan: 'basic',
-      leadsRemaining: 5,
+      phone: phone || '',
+      company: company || '',
+      location: location || '',
+      role: 'buyer',
+      plan: 'trial',
+      leadLimit: TRIAL_LEAD_LIMIT,
+      leadsUsed: 0,
+      leadsRemaining: TRIAL_LEAD_LIMIT,
     });
+
+    const admins = await User.find({ role: 'admin' }).select('_id');
+    if (admins.length) {
+      await Notification.insertMany(
+        admins.map((a) => ({
+          user: a._id,
+          title: 'New Signup',
+          message: `${name} (${email}) registered — 50-lead free trial started.`,
+          type: 'system',
+        }))
+      );
+    }
+
+    await createUserNotification(user._id, {
+      title: 'Welcome to REALIST',
+      message: 'Your account is ready. Browse Florida leads and save your favourites!',
+      type: 'system',
+    });
+
     sendUser(user, res, 201);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -57,9 +95,15 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ message: 'No account exists with this email. Please sign up first.' });
+    }
+    if (!(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Incorrect password. Please try again.' });
     }
     sendUser(user, res);
   } catch (err) {
@@ -73,10 +117,23 @@ router.get('/me', protect, async (req, res) => {
 
 router.put('/profile', protect, async (req, res) => {
   try {
-    const fields = ['name', 'phone', 'company', 'location', 'bio'];
+    const fields = ['name', 'phone', 'company', 'location'];
     fields.forEach((f) => {
       if (req.body[f] !== undefined) req.user[f] = req.body[f];
     });
+
+    if (req.body.avatar !== undefined) {
+      if (req.body.avatar === '' || req.body.avatar === null) {
+        req.user.avatar = '';
+      } else if (typeof req.body.avatar === 'string' && req.body.avatar.startsWith('data:image/')) {
+        if (req.body.avatar.length > 600000) {
+          return res.status(400).json({ message: 'Profile image is too large. Use a smaller image (max ~500KB).' });
+        }
+        req.user.avatar = req.body.avatar;
+      } else {
+        return res.status(400).json({ message: 'Invalid profile image format.' });
+      }
+    }
 
     if (req.body.preferences) {
       req.user.preferences = {
@@ -85,15 +142,14 @@ router.put('/profile', protect, async (req, res) => {
       };
     }
 
-    if (req.body.plan && req.user.role === 'buyer') {
-      const plan = req.body.plan;
-      if (['basic', 'pro', 'enterprise'].includes(plan)) {
-        req.user.plan = plan;
-        req.user.leadsRemaining = PLAN_LEADS[plan] ?? req.user.leadsRemaining;
-      }
-    }
-
     await req.user.save();
+
+    await createUserNotification(req.user._id, {
+      title: 'Profile Updated',
+      message: 'Your profile was saved successfully.',
+      type: 'system',
+    });
+
     res.json({ user: req.user });
   } catch (err) {
     res.status(500).json({ message: err.message });

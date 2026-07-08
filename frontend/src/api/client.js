@@ -1,6 +1,6 @@
-const API =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? 'https://realist-production.up.railway.app/api' : '/api');
+const PRODUCTION_API = 'https://realist-production.up.railway.app/api';
+
+const API = import.meta.env.VITE_API_URL || PRODUCTION_API;
 
 const getToken = () => {
   try {
@@ -21,10 +21,11 @@ async function request(path, options = {}) {
     const isJson = contentType.includes('application/json');
 
     if (!isJson) {
+      const text = await res.text().catch(() => '');
       throw new Error(
-        import.meta.env.PROD && !import.meta.env.VITE_API_URL
-          ? 'Backend not configured. Set VITE_API_URL in Vercel environment variables.'
-          : 'Unable to reach server. Please try again later.'
+        res.status >= 500
+          ? 'Server error. Please try again in a moment.'
+          : `Unexpected response (${res.status}). ${text.slice(0, 80)}`
       );
     }
 
@@ -36,14 +37,26 @@ async function request(path, options = {}) {
     return data;
   } catch (err) {
     if (err instanceof TypeError) {
-      throw new Error(
-        import.meta.env.PROD && !import.meta.env.VITE_API_URL
-          ? 'Backend not configured. Set VITE_API_URL in Vercel environment variables.'
-          : 'Unable to reach server. Please try again later.'
-      );
+      throw new Error('Cannot reach API server. Check your internet connection.');
     }
     throw err;
   }
+}
+
+async function requestBlob(path) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API}${path}`, { headers });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Export failed');
+  }
+  return res.blob();
+}
+
+function leadParamId(lead) {
+  return encodeURIComponent(String(lead?._id || lead?.id || lead?.radarId || ''));
 }
 
 export const api = {
@@ -55,21 +68,54 @@ export const api = {
   updateProfile: (body) =>
     request('/auth/profile', { method: 'PUT', body: JSON.stringify(body) }),
 
-  getPublicLeads: () => request('/leads/public'),
-  getMarketStats: () => request('/leads/market-stats'),
-  getLeads: (params) => {
-    const q = new URLSearchParams(params).toString();
-    return request(`/leads?${q}`);
+  getFeaturedLeads: (limit = 10) => request(`/leads/featured?limit=${limit}`),
+  searchPropertyLeads: (filters) =>
+    request('/leads/search', { method: 'POST', body: JSON.stringify(filters) }),
+  getPropertyLeads: (cacheKey, page = 1) =>
+    request(`/leads?cacheKey=${encodeURIComponent(cacheKey)}&page=${page}`),
+  refreshPropertyLeads: (filters) =>
+    request('/leads/refresh', { method: 'POST', body: JSON.stringify({ filters }) }),
+  exportPropertyLeads: (cacheKey, radarIds = []) => {
+    const q = new URLSearchParams({ cacheKey });
+    if (radarIds.length) q.set('ids', radarIds.join(','));
+    return requestBlob(`/leads/export?${q.toString()}`);
   },
-  getFavouriteLeads: () => request('/leads/favourites'),
-  getStaffLeads: () => request('/leads/staff'),
-  getLead: (id) => request(`/leads/${id}`),
-  purchaseLead: (id) => request(`/leads/${id}/purchase`, { method: 'POST' }),
-  toggleFavourite: (id) => request(`/leads/${id}/favourite`, { method: 'POST' }),
-  createLead: (body) => request('/leads', { method: 'POST', body: JSON.stringify(body) }),
+  togglePropertyFavourite: (lead) =>
+    request(`/leads/${leadParamId(lead)}/favourite`, {
+      method: 'POST',
+      body: JSON.stringify({ lead }),
+    }),
+  togglePropertyMyLead: (lead) =>
+    request(`/leads/${leadParamId(lead)}/my-leads`, {
+      method: 'POST',
+      body: JSON.stringify({ lead }),
+    }),
+  addAllPropertyMyLeads: (leads) =>
+    request('/leads/my-leads/bulk', {
+      method: 'POST',
+      body: JSON.stringify({
+        ids: leads.map((l) => l._id || l.id || l.radarId).filter(Boolean),
+        leads,
+      }),
+    }),
+  getPropertyFavourites: () => request('/leads/favourites'),
+  getPropertyMyLeads: () => request('/leads/my-saved'),
+  exportMyPropertyLeads: () => requestBlob('/leads/export/my-leads'),
+
+  getMarketStats: () => request('/marketplace/market-stats'),
+  getMarketplaceLeads: (params) => {
+    const q = new URLSearchParams(params).toString();
+    return request(`/marketplace?${q}`);
+  },
+  getFavouriteLeads: () => request('/marketplace/favourites'),
+  getStaffLeads: () => request('/marketplace/staff'),
+  getLead: (id) => request(`/marketplace/${id}`),
+  purchaseLead: (id) => request(`/marketplace/${id}/purchase`, { method: 'POST' }),
+  toggleFavourite: (id) => request(`/marketplace/${id}/favourite`, { method: 'POST' }),
+  createLead: (body) => request('/marketplace', { method: 'POST', body: JSON.stringify(body) }),
   updateLead: (id, body) =>
-    request(`/leads/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteLead: (id) => request(`/leads/${id}`, { method: 'DELETE' }),
+    request(`/marketplace/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteLead: (id) => request(`/marketplace/${id}`, { method: 'DELETE' }),
 
   getMyPurchases: (params) => {
     const q = new URLSearchParams(params).toString();
@@ -85,6 +131,9 @@ export const api = {
   updateUser: (id, body) =>
     request(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   getAdminLeads: () => request('/admin/leads'),
+  adminSync: (body) => request('/admin/sync', { method: 'POST', body: JSON.stringify(body) }),
+  clearPropertyCache: () => request('/admin/clear-cache', { method: 'POST' }),
+  getPropertyRadarStatus: () => request('/admin/propertyradar-status'),
 
   getNotifications: () => request('/notifications'),
   markRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
@@ -93,9 +142,14 @@ export const api = {
   subscribe: (email) =>
     request('/newsletter/subscribe', { method: 'POST', body: JSON.stringify({ email }) }),
 
-  getAttomProperties: (category = 'all', limit = 8) => {
-    const q = new URLSearchParams({ category, limit: String(limit) }).toString();
-    return request(`/attom/properties?${q}`);
-  },
-  getAttomCategories: () => request('/attom/categories'),
+  getHomeShowcase: () => request('/public/home'),
+  submitContact: (body) =>
+    request('/contact', { method: 'POST', body: JSON.stringify(body) }),
+
+  getAdminContacts: () => request('/admin/contacts'),
+  markContactRead: (id) => request(`/admin/contacts/${id}/read`, { method: 'PUT' }),
+  getLeadUsage: () => request('/admin/lead-usage'),
+  getPlatformSettings: () => request('/admin/platform-settings'),
+  updatePlatformSettings: (body) =>
+    request('/admin/platform-settings', { method: 'PUT', body: JSON.stringify(body) }),
 };

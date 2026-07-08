@@ -3,13 +3,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/startDb.js';
 import authRoutes from './routes/auth.js';
-import leadRoutes from './routes/leads.js';
+import propertyLeadRoutes from './routes/propertyLeads.js';
+import marketplaceRoutes from './routes/marketplace.js';
 import purchaseRoutes from './routes/purchases.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
 import newsletterRoutes from './routes/newsletter.js';
-import attomRoutes from './routes/attom.js';
+import publicRoutes from './routes/public.js';
+import contactRoutes from './routes/contact.js';
 import { seedIfEmpty } from './seedData.js';
+import { startFeaturedSyncCron } from './services/syncCronService.js';
+import { testPropertyRadarConnection, hasPropertyRadarKey, maskApiKey } from './services/propertyRadarService.js';
 
 dotenv.config();
 
@@ -34,21 +38,42 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', async (_req, res) => {
+  res.json({
+    status: 'ok',
+    propertyRadar: {
+      configured: hasPropertyRadarKey(),
+      keyHint: hasPropertyRadarKey() ? maskApiKey() : null,
+    },
+  });
+});
 
 app.use('/api/auth', authRoutes);
-app.use('/api/leads', leadRoutes);
+app.use('/api/leads', propertyLeadRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/newsletter', newsletterRoutes);
-app.use('/api/attom', attomRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/contact', contactRoutes);
 
 connectDB()
   .then(() => seedIfEmpty())
-  .then(() => {
+  .then(async () => {
+    if (hasPropertyRadarKey()) {
+      const pr = await testPropertyRadarConnection();
+      if (pr.ok) {
+        console.log(`PropertyRadar connected (${pr.keyHint}) — FL preview count: ${pr.sampleCount ?? 0}`);
+      } else {
+        console.warn(`PropertyRadar warning: ${pr.message}`);
+      }
+    } else {
+      console.warn('PropertyRadar: PROPERTYRADAR_API_KEY not set in backend/.env');
+    }
+    startFeaturedSyncCron();
     const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {

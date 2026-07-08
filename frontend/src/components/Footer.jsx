@@ -38,7 +38,7 @@ export default function Footer() {
             <h4 className="font-semibold text-sm mb-3 sm:mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-gray-500">
               <li><a href="/#features" className="hover:text-gray-900">Features</a></li>
-              <li><a href="/#pricing" className="hover:text-gray-900">Pricing</a></li>
+              <li><a href="/#on-demand" className="hover:text-gray-900">On Demand</a></li>
               <li><a href="/#how-it-works" className="hover:text-gray-900">How It Works</a></li>
               <li><Link to="/roadmap" className="hover:text-gray-900">Roadmap</Link></li>
             </ul>

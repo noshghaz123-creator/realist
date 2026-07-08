@@ -21,7 +21,8 @@ export default function Navbar() {
           <nav className="hidden md:flex items-center gap-9">
             <a href="/#features" className={navLink}>Features</a>
             <a href="/#how-it-works" className={navLink}>How it Works</a>
-            <a href="/#pricing" className={navLink}>Pricing</a>
+            <a href="/#on-demand" className={navLink}>On Demand</a>
+            <a href="/#contact" className={navLink}>Contact</a>
             <Link to="/about" className={navLink}>About</Link>
           </nav>
           <div className="hidden md:flex items-center gap-3">
@@ -30,7 +31,7 @@ export default function Navbar() {
                 <button onClick={() => navigate(dashPath)} className="text-sm font-semibold px-4 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors">
                   Dashboard
                 </button>
-                <button onClick={logout} className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">
+                <button onClick={logout} className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
                   Log out
                 </button>
               </>
@@ -54,13 +55,14 @@ export default function Navbar() {
         <div className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-lg px-4 py-5 space-y-1">
           <a href="/#features" className="block text-sm font-medium py-3 px-2 rounded-lg hover:bg-slate-50" onClick={() => setOpen(false)}>Features</a>
           <a href="/#how-it-works" className="block text-sm font-medium py-3 px-2 rounded-lg hover:bg-slate-50" onClick={() => setOpen(false)}>How it Works</a>
-          <a href="/#pricing" className="block text-sm font-medium py-3 px-2 rounded-lg hover:bg-slate-50" onClick={() => setOpen(false)}>Pricing</a>
+          <a href="/#on-demand" className="block text-sm font-medium py-3 px-2 rounded-lg hover:bg-slate-50" onClick={() => setOpen(false)}>On Demand</a>
+          <a href="/#contact" className="block text-sm font-medium py-3 px-2 rounded-lg hover:bg-slate-50" onClick={() => setOpen(false)}>Contact</a>
           <Link to="/about" className="block text-sm font-medium py-3 px-2 rounded-lg hover:bg-slate-50" onClick={() => setOpen(false)}>About</Link>
           <div className="pt-3 mt-3 border-t border-slate-100 space-y-2">
             {user ? (
               <>
                 <button onClick={() => { navigate(dashPath); setOpen(false); }} className="block w-full text-left text-sm font-medium py-3 px-2">Dashboard</button>
-                <button onClick={() => { logout(); setOpen(false); }} className="block w-full text-left text-sm font-medium py-3 px-2">Log out</button>
+                <button onClick={() => { logout(); setOpen(false); }} className="block w-full text-left text-sm font-medium py-3 px-2 text-red-600 hover:bg-red-50 rounded-lg">Log out</button>
               </>
             ) : (
               <>

@@ -1,106 +1,105 @@
-import { useEffect, useState } from 'react';
-import { Home, CheckCircle, Clock, DollarSign, User, Phone, MapPin, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { BookOpen, Download } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import PropertyLeadCard from '../../components/PropertyLeadCard';
+import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
-import { formatMoney, formatPrice, statusLabel, statusColors } from '../../utils/format';
+import { usePropertyLeadActions } from '../../hooks/usePropertyLeadActions';
+import { useToast } from '../../context/ToastContext';
+import { refreshNotificationBadge } from '../../utils/notifications';
 
 export default function MyLeads() {
-  const [purchases, setPurchases] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [filters, setFilters] = useState({ search: '', status: 'all' });
+  const { user } = useAuth();
+  const toast = useToast();
+  const [leads, setLeads] = useState([]);
+  const [exporting, setExporting] = useState(false);
 
-  const load = () => {
-    api.getMyPurchases(filters).then(setPurchases);
-    api.getPurchaseStats().then(setStats);
+  const load = useCallback(
+    () =>
+      api
+        .getPropertyMyLeads()
+        .then(setLeads)
+        .catch((err) => {
+          setLeads([]);
+          toast.error(err.message || 'Could not load My Leads');
+        }),
+    [toast]
+  );
+
+  useEffect(() => { load(); }, [user?.myPropertyLeads, load]);
+
+  const { favouriteIds, toggleFavourite, toggleMyLead } = usePropertyLeadActions();
+
+  const handleDelete = (lead) => {
+    const idStr = String(lead._id || lead.id || lead.radarId);
+    setLeads((prev) => prev.filter((l) => String(l._id || l.id || l.radarId) !== idStr));
+    toggleMyLead(lead).catch(() => load());
   };
 
-  useEffect(() => { load(); }, [filters.status]);
+  const handleFavourite = (lead) => {
+    toggleFavourite(lead).catch(() => {});
+  };
 
-  const updateStatus = async (id, dealStatus) => {
-    const notes = prompt('Add a note (optional):');
-    await api.updatePurchase(id, { dealStatus, privateNotes: notes ?? undefined });
-    load();
+  const handleExport = async () => {
+    if (!leads.length) return;
+    setExporting(true);
+    try {
+      const blob = await api.exportMyPropertyLeads();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'realist-my-leads.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Excel downloaded successfully — ${leads.length} leads`);
+      refreshNotificationBadge();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
     <DashboardLayout title="My Leads">
-      <h1 className="text-2xl font-bold">My Leads</h1>
-      <p className="text-gray-500 mt-1">All leads you've purchased, with full contact details.</p>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        {[
-          [Home, 'Total Purchased', stats?.totalPurchased],
-          [CheckCircle, 'Deals Closed', stats?.dealsClosed, 'text-green-600'],
-          [Clock, 'In Progress', stats?.inProgress, 'text-amber-600'],
-          [DollarSign, 'Total Spent', stats ? formatMoney(stats.totalSpent) : '—'],
-        ].map(([Icon, label, val, color]) => (
-          <div key={label} className="bg-white p-5 rounded-2xl border border-gray-100 flex items-start justify-between">
-            <div>
-              <p className="text-xs text-gray-500">{label}</p>
-              <p className={`text-2xl font-bold mt-1 ${color || ''}`}>{val ?? '—'}</p>
-            </div>
-            <Icon size={20} className="text-gray-300" />
-          </div>
-        ))}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">My Leads</h1>
+          <p className="text-gray-500 mt-1">Properties you marked with the green tick from Browse Leads.</p>
+        </div>
+        {leads.length > 0 && (
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-50"
+          >
+            <Download size={16} /> Download Excel
+          </button>
+        )}
       </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-3">
-        <input value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          onKeyDown={(e) => e.key === 'Enter' && load()}
-          placeholder="Search by city, state, owner..." className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm" />
-        <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
-          <option value="all">All Status</option>
-          <option value="contacted">Contacted</option>
-          <option value="in_progress">In Progress</option>
-          <option value="closed">Closed</option>
-        </select>
-      </div>
-
-      <div className="mt-6 space-y-4">
-        {purchases.map((p) => (
-          <div key={p._id} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h3 className="font-bold text-lg">{p.lead?.city}, {p.lead?.state}</h3>
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full border ${statusColors[p.dealStatus]}`}>
-                    {statusLabel[p.dealStatus]}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {p.lead?.propertyType} · {p.lead?.beds}bd/{p.lead?.baths}ba · {formatPrice(p.lead?.estValue)} est. · ARV {formatPrice(p.lead?.arv)}
-                </p>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="font-bold text-lg">${p.amount}</p>
-                <p className="text-xs text-gray-400">{new Date(p.createdAt).toLocaleDateString()}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-2 text-sm">
-              <p className="flex items-center gap-2"><User size={14} className="text-gray-400" />{p.lead?.ownerName}</p>
-              <p className="flex items-center gap-2"><Phone size={14} className="text-gray-400" />{p.lead?.ownerPhone}</p>
-              <p className="flex items-center gap-2"><MapPin size={14} className="text-gray-400" />{p.lead?.address}</p>
-            </div>
-
-            {p.privateNotes && (
-              <p className="mt-3 text-sm text-gray-500 italic flex items-start gap-2">
-                <MessageSquare size={14} className="mt-0.5 shrink-0" />"{p.privateNotes}"
-              </p>
-            )}
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button onClick={() => {
-                const s = prompt('New status (contacted, in_progress, closed):', p.dealStatus);
-                if (s) updateStatus(p._id, s);
-              }} className="text-sm text-gray-600 hover:text-gray-900">Update Status</button>
-              <Link to={`/leads/${p.lead?._id}`} className="text-sm font-medium hover:underline">View Lead →</Link>
-            </div>
-          </div>
-        ))}
-      </div>
+      {leads.length === 0 ? (
+        <div className="mt-12 text-center">
+          <BookOpen size={48} className="mx-auto text-green-200" />
+          <p className="mt-4 text-gray-500">No saved leads yet. Browse leads and click the green tick.</p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {leads.map((lead, idx) => (
+            <PropertyLeadCard
+              key={lead._id}
+              lead={lead}
+              index={idx + 1}
+              saved
+              showSave={false}
+              favourited={favouriteIds.has(String(lead._id || lead.id || lead.radarId))}
+              onDelete={handleDelete}
+              onFavourite={handleFavourite}
+            />
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 }

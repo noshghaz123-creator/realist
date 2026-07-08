@@ -3,18 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight, Check, Star, Shield, Zap, BarChart3, Users, Lock,
   Database, Phone, BadgeCheck, Store, ShoppingCart, CircleCheck,
-  Sparkles, TrendingUp, Home as HomeIcon, Quote,
+  Sparkles, TrendingUp, Quote,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import AttomPropertyFeed from '../components/AttomPropertyFeed';
+import ContactForm from '../components/ContactForm';
 import HorizontalScrollRow from '../components/HorizontalScrollRow';
 import { api } from '../api/client';
-import { formatMoney, formatPrice, typeLabel, tierLabel } from '../utils/format';
+import { formatMoney, formatPrice } from '../utils/format';
 import {
   MISSION, GEO_FOCUS, HIGH_VALUE_LEADS, PREMIUM_LEAD_TRAITS,
-  USP, REVENUE_MODEL, WORKFLOW_STEPS,
+  USP, WORKFLOW_STEPS,
 } from '../data/business';
+import { FALLBACK_STATS, FALLBACK_LEADS } from '../data/homeShowcase';
 
 const features = [
   { icon: Shield, title: 'Pre-Qualified Leads', desc: USP[0], color: 'bg-emerald-50 text-emerald-600' },
@@ -39,7 +40,13 @@ const steps = WORKFLOW_STEPS.map((desc, i) => ({
   desc,
 }));
 
-const plans = REVENUE_MODEL.subscription;
+const onDemandPoints = [
+  '50 free trial leads on signup — no credit card',
+  'Pay only for the leads you need after trial',
+  'Admin assigns custom lead limits on demand',
+  'Florida PropertyRadar leads with owner phone & email',
+  'Contact us anytime for bulk lead packages',
+];
 
 const testimonials = [
   { quote: 'REALIST saves me 20+ hours a week. South Florida pre-foreclosures with real seller conversations — not just raw data.', name: 'Marcus T.', role: 'Fix & Flip Investor · Miami, FL', deals: 48, initials: 'MT' },
@@ -47,34 +54,32 @@ const testimonials = [
   { quote: 'Enterprise plan with exclusive deals transformed our acquisition pipeline. Worth every dollar.', name: 'Kevin M.', role: 'Hedge Fund · Boca Raton, FL', deals: 120, initials: 'KM' },
 ];
 
-const tierClass = { basic: 'tier-basic', qualified: 'tier-qualified', premium: 'tier-premium' };
-
-function MobileLeadCard({ lead }) {
+function FeaturedLeadCard({ lead }) {
   return (
     <article className="snap-start shrink-0 w-[min(82vw,300px)] rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-semibold text-slate-900 truncate">{lead.city}, {lead.state}</p>
-          <p className="text-xs text-slate-500 mt-0.5">{lead.propertyType} · {lead.beds}bd/{lead.baths}ba</p>
-        </div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${tierClass[lead.tier] || 'tier-basic'}`}>
-          {tierLabel(lead.tier)}
-        </span>
+      <div className="min-w-0">
+        <p className="font-semibold text-slate-900 truncate">{lead.city}, {lead.state}</p>
+        <p className="text-xs text-slate-500 mt-0.5 truncate">{lead.propertyAddress || lead.street}</p>
+        <p className="text-xs text-slate-500 mt-0.5">
+          {lead.propertyType || 'Property'} · {lead.bedrooms ?? '—'}bd/{lead.bathrooms ?? '—'}ba
+        </p>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="text-[11px] font-medium px-2 py-1 rounded-lg bg-slate-100 text-slate-600 capitalize">
-          {typeLabel(lead.leadType)}
-        </span>
+        {lead.preForeclosure && (
+          <span className="text-[11px] font-medium px-2 py-1 rounded-lg bg-amber-50 text-amber-700">Pre-Foreclosure</span>
+        )}
+        {lead.highEquity && (
+          <span className="text-[11px] font-medium px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700">High Equity</span>
+        )}
       </div>
       <div className="mt-3 pt-3 border-t border-slate-100 flex items-end justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Est. / ARV</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Est. / Equity</p>
           <p className="text-sm font-semibold text-slate-800 truncate">
-            {formatPrice(lead.estValue)}
-            <span className="text-emerald-600 ml-1">· {formatPrice(lead.arv)}</span>
+            {formatPrice(lead.estimatedValue)}
+            {lead.equity != null && <span className="text-emerald-600 ml-1">· {formatPrice(lead.equity)}</span>}
           </p>
         </div>
-        <p className="text-lg font-bold text-slate-900 shrink-0">${lead.price}</p>
       </div>
     </article>
   );
@@ -132,33 +137,32 @@ function HeroPreview() {
 
 export default function Home() {
   const navigate = useNavigate();
-  const [leads, setLeads] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [leads, setLeads] = useState(FALLBACK_LEADS);
+  const [stats, setStats] = useState(FALLBACK_STATS);
+  const [featuredSource, setFeaturedSource] = useState('demo');
 
   useEffect(() => {
-    api.getPublicLeads()
-      .then((data) => setLeads(Array.isArray(data) ? data : []))
-      .catch(() => setLeads([]));
-    api.getMarketStats()
+    api.getHomeShowcase()
       .then((data) => {
-        if (data && typeof data.leadsDelivered === 'number') setStats(data);
+        if (data?.stats) setStats(data.stats);
+        if (Array.isArray(data?.featuredLeads) && data.featuredLeads.length) {
+          setLeads(data.featuredLeads);
+        }
+        if (data?.featuredSource) setFeaturedSource(data.featuredSource);
       })
-      .catch(() => {});
+      .catch(() => {
+        setStats(FALLBACK_STATS);
+        setLeads(FALLBACK_LEADS);
+        setFeaturedSource('demo');
+      });
   }, []);
 
-  const statCards = stats
-    ? [
-        [`${stats.leadsDelivered.toLocaleString()}+`, 'Leads Delivered'],
-        [`${stats.investorsServed.toLocaleString()}+`, 'Investors Served'],
-        [`${stats.leadAccuracy}%`, 'Lead Accuracy'],
-        [formatMoney(stats.dealsClosedValue ?? 0), 'Deals Closed'],
-      ]
-    : [
-        ['—', 'Leads Delivered'],
-        ['—', 'Investors Served'],
-        ['—', 'Lead Accuracy'],
-        ['—', 'Deals Closed'],
-      ];
+  const statCards = [
+    [`${stats.leadsDelivered.toLocaleString()}+`, 'Leads Delivered'],
+    [`${stats.investorsServed.toLocaleString()}+`, 'Investors Served'],
+    [`${stats.leadAccuracy}%`, 'Lead Accuracy'],
+    [formatMoney(stats.dealsClosedValue ?? 0), 'Deals Closed'],
+  ];
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
@@ -188,8 +192,8 @@ export default function Home() {
                 <button onClick={() => navigate('/auth?mode=signup')} className="btn-primary w-full sm:w-auto justify-center">
                   Start Free Trial <ArrowRight size={18} />
                 </button>
-                <button onClick={() => navigate('/#property-data')} className="btn-secondary w-full sm:w-auto justify-center">
-                  View Property Data
+                <button onClick={() => navigate('/#featured-leads')} className="btn-secondary w-full sm:w-auto justify-center">
+                  View Featured Leads
                 </button>
               </div>
               <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-x-6 sm:gap-y-2 text-xs sm:text-sm text-slate-500">
@@ -224,71 +228,46 @@ export default function Home() {
         </div>
       </section>
 
-      <AttomPropertyFeed />
-
-      {/* Live Marketplace */}
-      <section className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Featured Leads (MongoDB cache only) */}
+      <section id="featured-leads" className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="section-header">
-          <span className="section-badge">Live Marketplace</span>
+          <span className="section-badge">Featured Leads</span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Available Leads Right Now
+            Featured Properties
           </h2>
-          <p>South Florida leads live now — unlock seller contact, ARV & repair analysis.</p>
-        </div>
-
-        {/* Mobile: horizontal scroll + arrows */}
-        <div className="md:hidden">
-          {leads.length === 0 ? (
-            <div className="py-10 text-center text-slate-400 text-sm">Loading leads...</div>
-          ) : (
-            <HorizontalScrollRow className="px-3" trackClassName="pb-1 -mx-1 px-1">
-              {leads.map((lead) => (
-                <MobileLeadCard key={lead._id} lead={lead} />
-              ))}
-            </HorizontalScrollRow>
+          <p>Curated distressed opportunities synced to our database — sign up to unlock full details.</p>
+          {featuredSource === 'demo' && (
+            <p className="text-xs text-amber-600 font-medium mt-1">Sample Florida properties shown for preview.</p>
           )}
-          <p className="mt-2 text-center text-[11px] text-slate-400 font-medium">Swipe or use arrows to browse leads</p>
         </div>
 
-        {/* Desktop: table */}
-        <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-900/5 overflow-hidden">
-          <div className="grid grid-cols-[1.5fr_1fr_0.8fr_1fr_0.7fr] gap-4 px-8 py-4 bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-            <span>Lead</span><span>Type</span><span>Tier</span><span>Est. Value / ARV</span><span>Price</span>
-          </div>
-          {leads.map((lead, i) => (
-            <div
-              key={lead._id}
-              className={`grid grid-cols-[1.5fr_1fr_0.8fr_1fr_0.7fr] gap-4 px-8 py-5 items-center transition-colors hover:bg-slate-50/60 ${i > 0 ? 'border-t border-slate-50' : ''}`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                  <HomeIcon size={18} className="text-slate-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900">{lead.city}, {lead.state}</p>
-                  <p className="text-sm text-slate-500">{lead.propertyType} · {lead.beds}bd/{lead.baths}ba</p>
-                </div>
-              </div>
-              <span className="text-sm capitalize text-slate-600">{typeLabel(lead.leadType)}</span>
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full w-fit ${tierClass[lead.tier] || 'tier-basic'}`}>
-                {tierLabel(lead.tier)}
-              </span>
-              <div className="text-sm">
-                <span className="text-slate-700">{formatPrice(lead.estValue)}</span>
-                <span className="text-emerald-600 font-semibold ml-1">· {formatPrice(lead.arv)} ARV</span>
-              </div>
-              <span className="text-lg font-bold text-slate-900">${lead.price}</span>
+        <div className="md:hidden">
+          <HorizontalScrollRow className="px-3" trackClassName="pb-1 -mx-1 px-1">
+            {leads.map((lead) => (
+              <FeaturedLeadCard key={lead._id || lead.radarId} lead={lead} />
+            ))}
+          </HorizontalScrollRow>
+        </div>
+
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {leads.slice(0, 8).map((lead) => (
+            <div key={lead._id || lead.radarId} className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
+              <p className="font-semibold text-slate-900">{lead.city}, {lead.state}</p>
+              <p className="text-sm text-slate-500 mt-1 truncate">{lead.propertyAddress || lead.street}</p>
+              <p className="text-sm text-slate-500">{lead.propertyType} · {lead.bedrooms ?? '—'}bd/{lead.bathrooms ?? '—'}ba</p>
+              <p className="mt-3 text-sm font-semibold text-slate-800">
+                {formatPrice(lead.estimatedValue)}
+                {lead.equity != null && <span className="text-emerald-600 ml-1">· {formatPrice(lead.equity)} equity</span>}
+              </p>
             </div>
           ))}
-          {leads.length === 0 && (
-            <div className="py-16 text-center text-slate-400">Loading leads...</div>
-          )}
         </div>
+
         <button
           onClick={() => navigate('/auth?mode=signup')}
           className="mt-4 sm:mt-6 w-full py-3 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50/30 transition-all"
         >
-          Sign up to unlock full lead details →
+          Sign up to browse all PropertyRadar leads →
         </button>
       </section>
 
@@ -389,63 +368,78 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="page-section bg-slate-50/80">
+      {/* On Demand */}
+      <section id="on-demand" className="page-section bg-slate-50/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="section-header">
-            <span className="section-badge">Pricing</span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Simple, Transparent Pricing</h2>
+            <span className="section-badge">On Demand</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Leads When You Need Them
+            </h2>
             <p>
-            Per-lead: Basic {REVENUE_MODEL.perLead.basic.range} · Qualified {REVENUE_MODEL.perLead.qualified.range} · Exclusive {REVENUE_MODEL.perLead.exclusive.range}
-          </p>
+              No monthly subscription. Start with 50 free trial leads, then get more on demand from our team.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch">
-            {plans.map((p) => (
-              <div
-                key={p.name}
-                className={`relative bg-white p-6 sm:p-8 lg:p-9 rounded-xl sm:rounded-2xl border flex flex-col ${
-                  p.popular
-                    ? 'border-teal-200 pricing-glow lg:scale-[1.02] z-10'
-                    : 'border-slate-100 shadow-lg shadow-slate-900/5 card-lift'
-                }`}
-              >
-                {p.popular && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
-                    Most Popular
-                  </span>
-                )}
-                <h3 className="font-bold text-xl text-slate-900">{p.name}</h3>
-                <div className="mt-3 sm:mt-4">
-                  <span className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">${p.price}</span>
-                  <span className="text-slate-500 font-medium">/month</span>
-                </div>
-                <p className="text-sm text-slate-500 mt-2 font-medium">{p.delivery}</p>
-                <ul className="mt-5 sm:mt-8 space-y-2.5 sm:space-y-3.5 flex-1">
-                  {p.features.map((feat) => (
-                    <li key={feat} className="flex items-center gap-3 text-sm text-slate-600">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 shrink-0">
-                        <Check size={11} className="text-emerald-600" strokeWidth={3} />
-                      </span>
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => navigate('/auth?mode=signup')}
-                  className={`mt-8 w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
-                    p.popular
-                      ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20 hover:-translate-y-0.5'
-                      : 'border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-                  }`}
-                >
-                  Get Started
-                </button>
+          <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-100 p-6 sm:p-10 shadow-lg shadow-slate-900/5">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-teal-600 flex items-center justify-center">
+                <Zap size={24} className="text-white" />
               </div>
-            ))}
+              <div>
+                <h3 className="font-bold text-xl text-slate-900">On Demand Access</h3>
+                <p className="text-sm text-slate-500">Free trial → custom lead packages</p>
+              </div>
+            </div>
+            <ul className="space-y-3">
+              {onDemandPoints.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-sm text-slate-600">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 shrink-0 mt-0.5">
+                    <Check size={11} className="text-emerald-600" strokeWidth={3} />
+                  </span>
+                  {point}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => navigate('/auth?mode=signup')}
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5"
+              >
+                Start Free Trial — 50 Leads
+              </button>
+              <button
+                onClick={() => navigate('/contact')}
+                className="flex-1 py-3.5 rounded-xl font-semibold text-sm border border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                Contact for More Leads
+              </button>
+            </div>
           </div>
-          <p className="text-center text-sm text-slate-500 mt-8 font-medium">
-            Optional revenue share: 10%–30% of closed deal value · <button onClick={() => navigate('/lead-guide')} className="text-teal-600 hover:underline">View full pricing guide</button>
-          </p>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section id="contact" className="page-section bg-slate-50/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
+            <div>
+              <span className="section-badge">Contact Us</span>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mt-2">
+                Get On-Demand Leads
+              </h2>
+              <p className="text-slate-500 mt-3 leading-relaxed">
+                Need more than 50 trial leads? Fill out the form and our team will assign a custom lead package to your account.
+              </p>
+              <ul className="mt-6 space-y-2 text-sm text-slate-600">
+                <li>hello@realist.com</li>
+                <li>+1 (888) 555-1234</li>
+                <li>100 SE 3rd Ave, Fort Lauderdale, FL</li>
+              </ul>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8 shadow-lg shadow-slate-900/5">
+              <ContactForm />
+            </div>
+          </div>
         </div>
       </section>
 

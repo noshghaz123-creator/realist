@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import DataTable from '../../components/DataTable';
 import { api } from '../../api/client';
 import { formatPrice, typeLabel } from '../../utils/format';
 
@@ -97,38 +98,43 @@ export default function ManageLeads({ panel = 'admin' }) {
         </form>
       )}
 
-      <div className="mt-6 bg-white rounded-2xl border overflow-x-auto">
-        <table className="w-full text-sm min-w-[640px]">
-          <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
-            <tr>
-              <th className="px-6 py-3">Location</th>
-              <th className="px-6 py-3">Type</th>
-              <th className="px-6 py-3">Tier</th>
-              <th className="px-6 py-3">Value</th>
-              <th className="px-6 py-3">Price</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((l) => (
-              <tr key={l._id} className="border-t border-gray-50">
-                <td className="px-6 py-4 font-medium">{l.city}, {l.state}</td>
-                <td className="px-6 py-4 capitalize">{typeLabel(l.leadType)}</td>
-                <td className="px-6 py-4 uppercase text-xs font-bold">{l.tier}</td>
-                <td className="px-6 py-4">{formatPrice(l.estValue)}</td>
-                <td className="px-6 py-4 font-bold">${l.price}</td>
-                <td className="px-6 py-4 capitalize">{l.status}</td>
-                <td className="px-6 py-4 flex gap-2">
-                  <button onClick={() => startEdit(l)} className="text-gray-500 hover:text-gray-900"><Pencil size={16} /></button>
+      <div className="mt-6">
+        <DataTable
+          columns={[
+            { key: 'location', label: 'Location' },
+            { key: 'type', label: 'Type' },
+            { key: 'tier', label: 'Tier' },
+            { key: 'value', label: 'Value' },
+            { key: 'price', label: 'Price' },
+            { key: 'status', label: 'Status' },
+            { key: 'actions', label: '' },
+          ]}
+          empty={leads.length === 0}
+          emptyMessage="No leads yet."
+        >
+          {leads.map((l) => (
+            <tr key={l._id}>
+              <td className="font-medium">{l.city}, {l.state}</td>
+              <td className="capitalize">{typeLabel(l.leadType)}</td>
+              <td className="uppercase text-xs font-bold">{l.tier}</td>
+              <td>{formatPrice(l.estValue)}</td>
+              <td className="font-bold">${l.price}</td>
+              <td className="capitalize">{l.status}</td>
+              <td>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => startEdit(l)} className="text-gray-500 hover:text-gray-900">
+                    <Pencil size={16} />
+                  </button>
                   {panel === 'admin' && (
-                    <button onClick={() => remove(l._id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                    <button type="button" onClick={() => remove(l._id)} className="text-red-500 hover:text-red-700">
+                      <Trash2 size={16} />
+                    </button>
                   )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </DataTable>
       </div>
     </DashboardLayout>
   );

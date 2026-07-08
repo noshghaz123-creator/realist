@@ -68,8 +68,12 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   };
 
+  const patchUser = (updates) => {
+    setUser((current) => (current ? { ...current, ...updates } : current));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, patchUser }}>
       {children}
     </AuthContext.Provider>
   );

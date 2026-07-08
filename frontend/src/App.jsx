@@ -9,13 +9,14 @@ import MyLeads from './pages/dashboard/MyLeads';
 import Favourites from './pages/dashboard/Favourites';
 import Pricing from './pages/dashboard/Pricing';
 import Account from './pages/dashboard/Account';
-import Settings from './pages/dashboard/Settings';
 import Notifications from './pages/dashboard/Notifications';
 import AdminOverview from './pages/admin/AdminOverview';
 import ManageLeads from './pages/admin/ManageLeads';
 import ManageUsers from './pages/admin/ManageUsers';
 import AdminPlans from './pages/admin/AdminPlans';
 import AdminTeams from './pages/admin/AdminTeams';
+import AdminSync from './pages/admin/AdminSync';
+import AdminContacts from './pages/admin/AdminContacts';
 import TeamOverview from './pages/team/TeamOverview';
 import TeamLeads from './pages/team/TeamLeads';
 import TeamVerify from './pages/team/TeamVerify';
@@ -36,16 +37,20 @@ export default function App() {
       <Route path="/dashboard/favourites" element={<ProtectedRoute roles={['buyer']}><Favourites /></ProtectedRoute>} />
       <Route path="/dashboard/pricing" element={<ProtectedRoute roles={['buyer']}><Pricing /></ProtectedRoute>} />
       <Route path="/dashboard/account" element={<ProtectedRoute roles={['buyer']}><Account /></ProtectedRoute>} />
-      <Route path="/dashboard/settings" element={<ProtectedRoute roles={['buyer']}><Settings /></ProtectedRoute>} />
       <Route path="/dashboard/notifications" element={<ProtectedRoute roles={['buyer']}><Notifications /></ProtectedRoute>} />
 
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminOverview /></ProtectedRoute>} />
+      <Route path="/admin/account" element={<ProtectedRoute roles={['admin']}><Account /></ProtectedRoute>} />
+      <Route path="/admin/notifications" element={<ProtectedRoute roles={['admin']}><Notifications /></ProtectedRoute>} />
       <Route path="/admin/leads" element={<ProtectedRoute roles={['admin']}><ManageLeads /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><ManageUsers /></ProtectedRoute>} />
       <Route path="/admin/plans" element={<ProtectedRoute roles={['admin']}><AdminPlans /></ProtectedRoute>} />
       <Route path="/admin/teams" element={<ProtectedRoute roles={['admin']}><AdminTeams /></ProtectedRoute>} />
+      <Route path="/admin/sync" element={<ProtectedRoute roles={['admin']}><AdminSync /></ProtectedRoute>} />
+      <Route path="/admin/contacts" element={<ProtectedRoute roles={['admin']}><AdminContacts /></ProtectedRoute>} />
 
       <Route path="/team" element={<ProtectedRoute roles={['team', 'admin']}><TeamOverview /></ProtectedRoute>} />
+      <Route path="/team/account" element={<ProtectedRoute roles={['team', 'admin']}><Account /></ProtectedRoute>} />
       <Route path="/team/leads" element={<ProtectedRoute roles={['team', 'admin']}><TeamLeads /></ProtectedRoute>} />
       <Route path="/team/verify" element={<ProtectedRoute roles={['team', 'admin']}><TeamVerify /></ProtectedRoute>} />
 
