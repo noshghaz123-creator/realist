@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import PlanBadge, { planLabel, isOnDemandPlan } from '../../components/PlanBadge';
 import { api } from '../../api/client';
 import { cellValue } from '../../components/PropertyLeadCard';
+import MiniStatChart from '../../components/MiniStatChart';
 
 const STAT_CARDS = [
   {
@@ -13,36 +14,44 @@ const STAT_CARDS = [
     label: 'Favourites',
     icon: Heart,
     color: 'text-red-600',
+    chartColor: '#dc2626',
     bg: 'bg-red-50',
     border: 'border-red-100',
     link: '/dashboard/favourites',
+    chart: 'sparkline',
   },
   {
     key: 'myLeads',
     label: 'My Leads',
     icon: BookOpen,
     color: 'text-green-600',
+    chartColor: '#16a34a',
     bg: 'bg-green-50',
     border: 'border-green-100',
     link: '/dashboard/my-leads',
+    chart: 'sparkline',
   },
   {
     key: 'extracted',
     label: 'Leads Extracted',
     icon: Search,
     color: 'text-teal-600',
+    chartColor: '#0d9488',
     bg: 'bg-teal-50',
     border: 'border-teal-100',
     link: '/leads',
+    chart: 'area',
   },
   {
     key: 'remaining',
     label: 'Leads Remaining',
     icon: Gauge,
     color: 'text-violet-600',
+    chartColor: '#7c3aed',
     bg: 'bg-violet-50',
     border: 'border-violet-100',
     link: '/dashboard/pricing',
+    chart: 'gauge',
   },
 ];
 
@@ -54,6 +63,8 @@ export default function Overview() {
     refreshUser().catch(() => {});
     api.getPropertyMyLeads().then((leads) => setSavedLeads(leads.slice(0, 3))).catch(() => setSavedLeads([]));
   }, []);
+
+  const leadLimit = user?.leadLimit ?? 50;
 
   const stats = {
     favourites: user?.favouritePropertyLeads?.length ?? 0,
@@ -71,16 +82,26 @@ export default function Overview() {
       <p className="text-gray-500 mt-1">Here's your lead activity overview.</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-        {STAT_CARDS.map(({ key, label, icon: Icon, color, bg, border, link }) => (
+        {STAT_CARDS.map(({ key, label, icon: Icon, color, bg, border, link, chart, chartColor }) => (
           <Link
             key={key}
             to={link}
             className={`block bg-white p-5 rounded-2xl border ${border} hover:shadow-md transition-shadow`}
           >
-            <div className={`inline-flex p-2 rounded-xl ${bg} ${color} mb-3`}>
-              <Icon size={18} />
+            <div className="flex items-start justify-between gap-2">
+              <div className={`inline-flex p-2 rounded-xl ${bg} ${color}`}>
+                <Icon size={18} />
+              </div>
+              <div className="flex-1 min-w-0 max-w-[55%]">
+                <MiniStatChart
+                  type={chart}
+                  value={stats[key]}
+                  max={key === 'extracted' || key === 'remaining' ? leadLimit : Math.max(stats[key], 10)}
+                  color={chartColor}
+                />
+              </div>
             </div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mt-3">{label}</p>
             <p className="text-2xl font-bold mt-1">{stats[key]}</p>
           </Link>
         ))}
