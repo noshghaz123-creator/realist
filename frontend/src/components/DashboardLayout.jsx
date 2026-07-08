@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Search, BookOpen, Heart, CreditCard, User, Bell, LogOut,
   FileText, Users, Building2, Menu, X, Database, Mail, Inbox as InboxIcon,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import Logo from './Logo';
 import UserAvatar from './UserAvatar';
@@ -9,6 +10,8 @@ import { planLabel } from './PlanBadge';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState, useRef } from 'react';
 import { api } from '../api/client';
+
+const SIDEBAR_COLLAPSED_KEY = 'realist:sidebar-collapsed';
 
 const buyerNav = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -57,13 +60,21 @@ const adminAccountNav = [
   { to: '/admin/notifications', label: 'Notifications', icon: Bell },
 ];
 
-function roleSubtitle(user, panel) {
-  if (panel === 'admin') return 'Administrator';
-  if (panel === 'team') return 'Team member';
-  return planLabel(user?.plan);
+function panelFromPath(pathname) {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/team')) return 'team';
+  return 'buyer';
 }
 
-function NavLinks({ items, location, onNavigate, badges = {} }) {
+function readSidebarCollapsed() {
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function NavLinks({ items, location, onNavigate, badges = {}, collapsed = false }) {
   return items.map(({ to, label, icon: Icon }) => {
     const active = location.pathname === to;
     const badge = badges[to] || 0;
@@ -72,25 +83,34 @@ function NavLinks({ items, location, onNavigate, badges = {} }) {
         key={to}
         to={to}
         onClick={onNavigate}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-          active ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-50'
-        }`}
+        title={collapsed ? label : undefined}
+        aria-label={label}
+        className={`relative flex items-center rounded-lg text-sm font-medium transition-colors ${
+          collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+        } ${active ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-50'}`}
       >
-        <Icon size={18} />
-        {label}
-        {badge > 0 && (
-          <span className={`ml-auto text-[10px] w-5 h-5 rounded-full flex items-center justify-center ${
-            active ? 'bg-white text-black' : 'bg-teal-600 text-white'
-          }`}>
-            {badge}
-          </span>
+        <Icon size={18} className="shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="truncate">{label}</span>
+            {badge > 0 && (
+              <span className={`ml-auto text-[10px] w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                active ? 'bg-white text-black' : 'bg-teal-600 text-white'
+              }`}>
+                {badge}
+              </span>
+            )}
+          </>
+        )}
+        {collapsed && badge > 0 && (
+          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-teal-600 ring-2 ring-white" />
         )}
       </Link>
     );
   });
 }
 
-export default function DashboardLayout({ children, title, panel = 'buyer' }) {
+export default function DashboardLayout({ children, title }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -98,8 +118,10 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
   const [inboxUnread, setInboxUnread] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarCollapsed);
   const profileRef = useRef(null);
 
+  const panel = panelFromPath(location.pathname);
   const mainNav = panel === 'admin' ? adminNav : panel === 'team' ? teamNav : buyerNav;
   const panelLabel = panel === 'admin' ? 'ADMIN PANEL' : panel === 'team' ? 'TEAM PANEL' : 'INVESTOR PANEL';
   const profilePath = profilePathForPanel(panel);
@@ -109,6 +131,18 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
     : panel === 'admin'
       ? adminAccountNav
       : [{ to: profilePath, label: 'Profile', icon: User }];
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setMenuOpen(false);
@@ -155,72 +189,107 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
   }, [profileOpen]);
 
   const closeMenu = () => setMenuOpen(false);
+  const showCollapsed = sidebarCollapsed;
 
   const sidebar = (
     <>
-      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
-        <Logo />
+      <div className={`relative border-b border-gray-100 shrink-0 ${showCollapsed ? 'px-2 pt-3 pb-2' : 'px-4 sm:px-5 pt-4 sm:pt-5 pb-3'}`}>
+        <div className={showCollapsed ? 'flex justify-center' : ''}>
+          <Logo compact={showCollapsed} />
+        </div>
+        {!showCollapsed && (
+          <button
+            type="button"
+            onClick={closeMenu}
+            className="lg:hidden absolute top-4 right-3 p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
+        )}
+      </div>
+
+      <div className={`hidden lg:flex shrink-0 ${showCollapsed ? 'justify-center px-2 pb-2' : 'justify-end px-4 pb-3'}`}>
         <button
           type="button"
-          onClick={closeMenu}
-          className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"
-          aria-label="Close menu"
+          onClick={toggleSidebar}
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+          aria-label={showCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={showCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <X size={20} />
+          {showCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
-      <nav className="flex-1 p-4 space-y-6 overflow-y-auto custom-scrollbar">
+
+      <nav className={`flex-1 overflow-y-auto custom-scrollbar space-y-6 ${showCollapsed ? 'p-2 pt-0' : 'p-4 pt-0'}`}>
         <div>
-          <p className="text-[10px] font-semibold text-gray-400 tracking-wider mb-2 px-3">{panelLabel}</p>
+          {!showCollapsed && (
+            <p className="text-[10px] font-semibold text-gray-400 tracking-wider mb-2 px-3">{panelLabel}</p>
+          )}
+          {showCollapsed && <div className="h-px bg-gray-100 mb-2 mx-1" />}
           <div className="space-y-1">
             <NavLinks
               items={mainNav}
               location={location}
               onNavigate={closeMenu}
               badges={panel === 'buyer' ? { '/dashboard/inbox': inboxUnread } : {}}
+              collapsed={showCollapsed}
             />
           </div>
         </div>
         <div>
-          <p className="text-[10px] font-semibold text-gray-400 tracking-wider mb-2 px-3">ACCOUNT</p>
+          {!showCollapsed && (
+            <p className="text-[10px] font-semibold text-gray-400 tracking-wider mb-2 px-3">ACCOUNT</p>
+          )}
+          {showCollapsed && <div className="h-px bg-gray-100 mb-2 mx-1" />}
           <div className="space-y-1">
             {profileNav.map(({ to, label, icon: Icon }) => {
-                const active = location.pathname === to;
-                return (
-                  <Link
-                    key={to}
-                    to={to}
-                    onClick={closeMenu}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      active ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon size={18} />
-                    {label}
-                    {(panel === 'buyer' || panel === 'admin') && label === 'Notifications' && notifCount > 0 && (
-                      <span className="ml-auto bg-black text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
-                        {notifCount}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-      </nav>
-      <div className="p-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <UserAvatar user={user} size="md" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{user?.name}</p>
-            <p className="text-xs text-gray-500 capitalize truncate">{roleSubtitle(user, panel)}</p>
+              const active = location.pathname === to;
+              const showBadge = (panel === 'buyer' || panel === 'admin') && label === 'Notifications' && notifCount > 0;
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={closeMenu}
+                  title={showCollapsed ? label : undefined}
+                  aria-label={label}
+                  className={`relative flex items-center rounded-lg text-sm font-medium transition-colors ${
+                    showCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+                  } ${active ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <Icon size={18} className="shrink-0" />
+                  {!showCollapsed && (
+                    <>
+                      <span className="truncate">{label}</span>
+                      {showBadge && (
+                        <span className="ml-auto bg-black text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                          {notifCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {showCollapsed && showBadge && (
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-teal-600 ring-2 ring-white" />
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
+      </nav>
+
+      <div className={`shrink-0 border-t border-gray-100 ${showCollapsed ? 'p-2' : 'p-4'}`}>
         <button
+          type="button"
           onClick={() => { logout(); navigate('/'); closeMenu(); }}
-          className="flex items-center gap-2 w-full px-3 py-2 mt-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+          title="Log out"
+          aria-label="Log out"
+          className={`flex items-center w-full text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors ${
+            showCollapsed ? 'justify-center p-2.5' : 'gap-2 px-3 py-2.5'
+          }`}
         >
-          <LogOut size={16} /> Log out
+          <LogOut size={18} className="shrink-0" />
+          {!showCollapsed && <span>Log out</span>}
         </button>
       </div>
     </>
@@ -238,14 +307,14 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
       )}
 
       <aside
-        className={`w-64 max-w-[85vw] bg-white border-r border-gray-100 flex flex-col fixed h-full z-50 transition-transform duration-200 ease-out lg:translate-x-0 ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`bg-white border-r border-gray-100 flex flex-col fixed h-full z-50 transition-all duration-200 ease-out max-w-[85vw] ${
+          showCollapsed ? 'lg:w-[4.25rem] w-64' : 'w-64'
+        } ${menuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         {sidebar}
       </aside>
 
-      <div className="flex-1 w-full lg:ml-64 min-w-0">
+      <div className={`flex-1 w-full min-w-0 transition-all duration-200 ${showCollapsed ? 'lg:ml-[4.25rem]' : 'lg:ml-64'}`}>
         <header className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-30 gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
