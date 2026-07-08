@@ -28,6 +28,7 @@ function actionLink(notification, panel) {
   if (/Extracted|Refreshed|Excel Downloaded/i.test(notification.title)) return '/leads';
   if (notification.title === 'Welcome to REALIST') return '/leads';
   if (notification.title === 'Profile Updated') return '/dashboard/account';
+  if (/Reply from Admin|Inbox/i.test(notification.title)) return '/dashboard/inbox';
   return null;
 }
 

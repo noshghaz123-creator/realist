@@ -145,9 +145,15 @@ export const api = {
   getHomeShowcase: () => request('/public/home'),
   submitContact: (body) =>
     request('/contact', { method: 'POST', body: JSON.stringify(body) }),
+  getInbox: () => request('/contact/inbox'),
+  getInboxThread: (id) => request(`/contact/inbox/${id}`),
+  replyInbox: (id, message) =>
+    request(`/contact/inbox/${id}/reply`, { method: 'POST', body: JSON.stringify({ message }) }),
 
   getAdminContacts: () => request('/admin/contacts'),
   markContactRead: (id) => request(`/admin/contacts/${id}/read`, { method: 'PUT' }),
+  adminReplyContact: (id, message) =>
+    request(`/admin/contacts/${id}/reply`, { method: 'POST', body: JSON.stringify({ message }) }),
   getLeadUsage: () => request('/admin/lead-usage'),
   getPlatformSettings: () => request('/admin/platform-settings'),
   updatePlatformSettings: (body) =>

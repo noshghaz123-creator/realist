@@ -8,6 +8,8 @@ import LeadDetail from './pages/dashboard/LeadDetail';
 import MyLeads from './pages/dashboard/MyLeads';
 import Favourites from './pages/dashboard/Favourites';
 import Pricing from './pages/dashboard/Pricing';
+import Contact from './pages/dashboard/Contact';
+import Inbox from './pages/dashboard/Inbox';
 import Account from './pages/dashboard/Account';
 import Notifications from './pages/dashboard/Notifications';
 import AdminOverview from './pages/admin/AdminOverview';
@@ -36,6 +38,8 @@ export default function App() {
       <Route path="/dashboard/my-leads" element={<ProtectedRoute roles={['buyer']}><MyLeads /></ProtectedRoute>} />
       <Route path="/dashboard/favourites" element={<ProtectedRoute roles={['buyer']}><Favourites /></ProtectedRoute>} />
       <Route path="/dashboard/pricing" element={<ProtectedRoute roles={['buyer']}><Pricing /></ProtectedRoute>} />
+      <Route path="/dashboard/contact" element={<ProtectedRoute roles={['buyer']}><Contact /></ProtectedRoute>} />
+      <Route path="/dashboard/inbox" element={<ProtectedRoute roles={['buyer']}><Inbox /></ProtectedRoute>} />
       <Route path="/dashboard/account" element={<ProtectedRoute roles={['buyer']}><Account /></ProtectedRoute>} />
       <Route path="/dashboard/notifications" element={<ProtectedRoute roles={['buyer']}><Notifications /></ProtectedRoute>} />
 

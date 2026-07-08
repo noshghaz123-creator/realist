@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Search, BookOpen, Heart, CreditCard, User, Bell, LogOut,
-  FileText, Users, Building2, Menu, X, Database, Mail,
+  FileText, Users, Building2, Menu, X, Database, Mail, Inbox as InboxIcon,
 } from 'lucide-react';
 import Logo from './Logo';
 import UserAvatar from './UserAvatar';
@@ -16,6 +16,8 @@ const buyerNav = [
   { to: '/dashboard/my-leads', label: 'My Leads', icon: BookOpen },
   { to: '/dashboard/favourites', label: 'Favourites', icon: Heart },
   { to: '/dashboard/pricing', label: 'On Demand', icon: CreditCard },
+  { to: '/dashboard/contact', label: 'Contact', icon: Mail },
+  { to: '/dashboard/inbox', label: 'Inbox', icon: InboxIcon },
 ];
 
 const adminNav = [
@@ -61,9 +63,10 @@ function roleSubtitle(user, panel) {
   return planLabel(user?.plan);
 }
 
-function NavLinks({ items, location, onNavigate }) {
+function NavLinks({ items, location, onNavigate, badges = {} }) {
   return items.map(({ to, label, icon: Icon }) => {
     const active = location.pathname === to;
+    const badge = badges[to] || 0;
     return (
       <Link
         key={to}
@@ -75,6 +78,13 @@ function NavLinks({ items, location, onNavigate }) {
       >
         <Icon size={18} />
         {label}
+        {badge > 0 && (
+          <span className={`ml-auto text-[10px] w-5 h-5 rounded-full flex items-center justify-center ${
+            active ? 'bg-white text-black' : 'bg-teal-600 text-white'
+          }`}>
+            {badge}
+          </span>
+        )}
       </Link>
     );
   });
@@ -85,6 +95,7 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [notifCount, setNotifCount] = useState(0);
+  const [inboxUnread, setInboxUnread] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -112,6 +123,19 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
     loadNotifs();
     window.addEventListener('realist:refresh-notifications', loadNotifs);
     return () => window.removeEventListener('realist:refresh-notifications', loadNotifs);
+  }, [location.pathname, panel]);
+
+  useEffect(() => {
+    if (panel !== 'buyer') return;
+    const loadInbox = () => {
+      api
+        .getInbox()
+        .then((list) => setInboxUnread(list.reduce((sum, t) => sum + (t.unreadReplies || 0), 0)))
+        .catch(() => setInboxUnread(0));
+    };
+    loadInbox();
+    window.addEventListener('realist:refresh-notifications', loadInbox);
+    return () => window.removeEventListener('realist:refresh-notifications', loadInbox);
   }, [location.pathname, panel]);
 
   useEffect(() => {
@@ -149,7 +173,12 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
         <div>
           <p className="text-[10px] font-semibold text-gray-400 tracking-wider mb-2 px-3">{panelLabel}</p>
           <div className="space-y-1">
-            <NavLinks items={mainNav} location={location} onNavigate={closeMenu} />
+            <NavLinks
+              items={mainNav}
+              location={location}
+              onNavigate={closeMenu}
+              badges={panel === 'buyer' ? { '/dashboard/inbox': inboxUnread } : {}}
+            />
           </div>
         </div>
         <div>

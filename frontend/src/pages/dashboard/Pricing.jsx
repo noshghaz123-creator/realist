@@ -66,10 +66,10 @@ export default function Pricing() {
           <li className="flex items-center gap-2"><Phone size={16} className="text-teal-600" /> +1 (888) 555-1234</li>
         </ul>
         <Link
-          to="/leads"
+          to="/dashboard/contact"
           className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-800"
         >
-          Browse Leads <ArrowRight size={14} />
+          Contact for More Leads <ArrowRight size={14} />
         </Link>
       </div>
 

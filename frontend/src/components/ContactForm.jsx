@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Send, Check } from 'lucide-react';
 import { api } from '../api/client';
 
-export default function ContactForm({ compact = false }) {
+export default function ContactForm({ compact = false, defaults = {}, onSuccess }) {
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -14,6 +14,11 @@ export default function ContactForm({ compact = false }) {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (!defaults || !Object.keys(defaults).length) return;
+    setForm((prev) => ({ ...prev, ...defaults }));
+  }, [defaults]);
+
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -22,7 +27,14 @@ export default function ContactForm({ compact = false }) {
     try {
       const data = await api.submitContact(form);
       setSuccess(data.message);
-      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+      onSuccess?.(data.message);
+      setForm({
+        name: defaults.name || '',
+        email: defaults.email || '',
+        phone: defaults.phone || '',
+        subject: defaults.subject || '',
+        message: defaults.message || '',
+      });
     } catch (err) {
       setError(err.message);
     } finally {

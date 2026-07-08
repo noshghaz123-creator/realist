@@ -9,6 +9,7 @@ import { getPlatformSettings, updateManualRevenue } from '../services/platformSe
 import { adminSync, clearCache } from '../controllers/adminSyncController.js';
 import { getAdminStats } from '../services/leadCacheService.js';
 import { testPropertyRadarConnection } from '../services/propertyRadarService.js';
+import { adminReplyToContact } from '../services/contactService.js';
 
 const router = express.Router();
 
@@ -131,6 +132,16 @@ router.put('/contacts/:id/read', async (req, res) => {
     res.json(contact);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+router.post('/contacts/:id/reply', async (req, res) => {
+  try {
+    const contact = await adminReplyToContact(req.params.id, req.body?.message);
+    res.json({ message: 'Reply sent to user inbox.', contact });
+  } catch (err) {
+    const status = err.message === 'Contact not found' ? 404 : 400;
+    res.status(status).json({ message: err.message });
   }
 });
 

@@ -50,7 +50,7 @@ const STAT_CARDS = [
     chartColor: '#7c3aed',
     bg: 'bg-violet-50',
     border: 'border-violet-100',
-    link: '/dashboard/pricing',
+    link: '/dashboard/contact',
     chart: 'gauge',
   },
 ];
