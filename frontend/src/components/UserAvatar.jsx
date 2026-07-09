@@ -13,11 +13,13 @@ export default function UserAvatar({ user, size = 'md', className = '' }) {
     .toUpperCase() || '?';
 
   const sizeClass = SIZES[size] || SIZES.md;
+  const avatarSrc = typeof user?.avatar === 'string' ? user.avatar.trim() : '';
 
-  if (user?.avatar) {
+  if (avatarSrc) {
     return (
       <img
-        src={user.avatar}
+        key={avatarSrc.slice(0, 48)}
+        src={avatarSrc}
         alt={user.name || 'Profile'}
         className={`rounded-full object-cover shrink-0 ${sizeClass} ${className}`}
       />

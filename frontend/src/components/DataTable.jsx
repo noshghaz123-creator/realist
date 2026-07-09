@@ -1,5 +1,5 @@
 /**
- * Shared table shell — no horizontal scroll, consistent styling app-wide.
+ * Shared table shell — horizontal scroll on narrow screens, nowrap headers.
  */
 export default function DataTable({ columns, children, empty = false, emptyMessage = 'No data yet.', colSpan }) {
   const span = colSpan ?? columns.length;

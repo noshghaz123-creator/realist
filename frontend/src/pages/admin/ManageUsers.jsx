@@ -146,8 +146,8 @@ export default function ManageUsers() {
           {staff.map((u) => (
             <tr key={u._id}>
               <td><UserAvatar user={u} size="sm" /></td>
-              <td className="font-medium">{u.name}</td>
-              <td className="text-gray-500">{u.email}</td>
+              <td className="font-medium cell-nowrap">{u.name}</td>
+              <td className="text-gray-500 cell-email">{u.email}</td>
               <td>
                 <select
                   value={u.role}

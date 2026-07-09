@@ -114,12 +114,12 @@ export default function ManageLeads({ panel = 'admin' }) {
         >
           {leads.map((l) => (
             <tr key={l._id}>
-              <td className="font-medium">{l.city}, {l.state}</td>
-              <td className="capitalize">{typeLabel(l.leadType)}</td>
-              <td className="uppercase text-xs font-bold">{l.tier}</td>
-              <td>{formatPrice(l.estValue)}</td>
-              <td className="font-bold">${l.price}</td>
-              <td className="capitalize">{l.status}</td>
+              <td className="font-medium cell-nowrap">{l.city}, {l.state}</td>
+              <td className="capitalize cell-nowrap">{typeLabel(l.leadType)}</td>
+              <td className="uppercase text-xs font-bold cell-nowrap">{l.tier}</td>
+              <td className="cell-nowrap">{formatPrice(l.estValue)}</td>
+              <td className="font-bold cell-nowrap">${l.price}</td>
+              <td className="capitalize cell-nowrap">{l.status}</td>
               <td>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => startEdit(l)} className="text-gray-500 hover:text-gray-900">

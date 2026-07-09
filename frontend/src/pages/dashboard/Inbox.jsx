@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Inbox as InboxIcon, Send, Mail, MessageSquare, PenLine } from 'lucide-react';
+import { Inbox as InboxIcon, Send, Mail, MessageSquare, PenLine, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import { api } from '../../api/client';
@@ -34,7 +34,7 @@ function MessageBubble({ from, body, time }) {
   const isAdmin = from === 'admin';
   return (
     <div className={`flex ${isAdmin ? 'justify-start' : 'justify-end'}`}>
-      <div className={`max-w-[min(100%,28rem)] ${isAdmin ? 'pr-8' : 'pl-8'}`}>
+      <div className={`max-w-[min(100%,28rem)] ${isAdmin ? 'pr-4 sm:pr-8' : 'pl-4 sm:pl-8'}`}>
         <p className={`text-[11px] font-semibold mb-1.5 ${isAdmin ? 'text-teal-700' : 'text-gray-500 text-right'}`}>
           {isAdmin ? 'REALIST Support' : 'You'}
         </p>
@@ -80,6 +80,7 @@ export default function Inbox() {
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
 
   const loadThreads = useCallback(() => {
     setLoading(true);
@@ -94,10 +95,17 @@ export default function Inbox() {
     loadThreads();
   }, [loadThreads]);
 
+  const closeThread = () => {
+    setSelected(null);
+    setMobileThreadOpen(false);
+    setReply('');
+  };
+
   const openThread = async (thread) => {
     try {
       const full = await api.getInboxThread(thread._id);
       setSelected(full);
+      setMobileThreadOpen(true);
       setThreads((prev) =>
         prev.map((t) =>
           t._id === full._id ? { ...t, unreadReplies: 0, replies: full.replies } : t
@@ -130,16 +138,14 @@ export default function Inbox() {
 
   return (
     <DashboardLayout title="Inbox">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
-              <InboxIcon size={20} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
-              <p className="text-sm text-gray-500">Messages with the REALIST team</p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4 sm:mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
+            <InboxIcon size={20} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Inbox</h1>
+            <p className="text-sm text-gray-500">Messages with the REALIST team</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -157,14 +163,18 @@ export default function Inbox() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col lg:flex-row min-h-[calc(100vh-13rem)] lg:min-h-[560px] max-h-[calc(100vh-10rem)]">
-        {/* Thread list */}
-        <div className="lg:w-[320px] xl:w-[360px] shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col min-h-[240px] lg:min-h-0">
-          <div className="px-4 py-3.5 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col lg:flex-row lg:min-h-[560px] lg:max-h-[calc(100vh-11rem)]">
+        {/* Thread list — hidden on mobile when viewing a thread */}
+        <div
+          className={`lg:w-[320px] xl:w-[360px] shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100 flex flex-col max-h-[45vh] lg:max-h-none lg:min-h-0 ${
+            mobileThreadOpen ? 'hidden lg:flex' : 'flex'
+          }`}
+        >
+          <div className="px-4 py-3.5 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between shrink-0">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conversations</p>
             <span className="text-xs font-medium text-gray-400">{threads.length}</span>
           </div>
-          <div className="overflow-y-auto flex-1 custom-scrollbar">
+          <div className="overflow-y-auto flex-1 custom-scrollbar min-h-0">
             {loading ? (
               <div className="p-8 text-center">
                 <div className="w-6 h-6 border-2 border-gray-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
@@ -215,13 +225,17 @@ export default function Inbox() {
           </div>
         </div>
 
-        {/* Thread detail */}
-        <div className="flex-1 flex flex-col min-h-[360px] lg:min-h-0 bg-gray-50/30">
+        {/* Thread detail — full width on mobile when open */}
+        <div
+          className={`flex-1 flex flex-col min-h-0 bg-gray-50/30 ${
+            mobileThreadOpen ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
           {!selected ? (
             threads.length === 0 && !loading ? (
               <EmptyInbox />
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                   <MessageSquare size={22} className="text-gray-400" />
                 </div>
@@ -231,34 +245,46 @@ export default function Inbox() {
             )
           ) : (
             <>
-              <div className="px-5 sm:px-6 py-4 border-b border-gray-100 bg-white">
-                <h2 className="font-bold text-gray-900">{selected.subject || 'General inquiry'}</h2>
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 bg-white shrink-0">
+                <button
+                  type="button"
+                  onClick={closeThread}
+                  className="lg:hidden inline-flex items-center gap-1 text-sm font-medium text-teal-700 mb-2 -ml-1 px-1 py-1"
+                >
+                  <ChevronLeft size={18} /> Back
+                </button>
+                <h2 className="font-bold text-gray-900 text-base sm:text-lg">{selected.subject || 'General inquiry'}</h2>
                 <p className="text-xs text-gray-400 mt-1">Started {formatDate(selected.createdAt)}</p>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-5 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 custom-scrollbar min-h-0">
                 <MessageBubble from="user" body={selected.message} time={selected.createdAt} />
                 {(selected.replies || []).map((r) => (
-                  <MessageBubble key={r._id} from={r.from} body={r.body} time={r.createdAt} />
+                  <MessageBubble
+                    key={r._id}
+                    from={r.from}
+                    body={r.body}
+                    time={r.createdAt}
+                  />
                 ))}
               </div>
 
-              <form onSubmit={sendReply} className="p-4 sm:p-5 border-t border-gray-100 bg-white">
+              <form onSubmit={sendReply} className="p-3 sm:p-5 border-t border-gray-100 bg-white shrink-0">
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                   Reply
                 </label>
-                <div className="flex gap-3 items-end">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end">
                   <textarea
                     rows={2}
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
                     placeholder="Type your message…"
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-50 focus:bg-white"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 bg-gray-50 focus:bg-white min-h-[44px]"
                   />
                   <button
                     type="submit"
                     disabled={sending || !reply.trim()}
-                    className="inline-flex items-center gap-2 px-5 py-3 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 shrink-0"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 w-full sm:w-auto shrink-0"
                   >
                     <Send size={16} />
                     {sending ? 'Sending…' : 'Send'}

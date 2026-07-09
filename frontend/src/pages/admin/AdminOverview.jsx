@@ -144,12 +144,12 @@ export default function AdminOverview() {
         >
           {leadUsage.map((u) => (
             <tr key={u._id}>
-              <td className="font-medium">{u.name}</td>
-              <td className="text-gray-500">{u.email}</td>
-              <td className="font-semibold text-teal-700">{u.leadsUsed ?? 0}</td>
-              <td>{u.leadLimit ?? 50}</td>
-              <td>{u.leadsRemaining ?? 0}</td>
-              <td>{planLabel(u.plan)}</td>
+              <td className="font-medium cell-nowrap">{u.name}</td>
+              <td className="text-gray-500 cell-email">{u.email}</td>
+              <td className="font-semibold text-teal-700 cell-nowrap">{u.leadsUsed ?? 0}</td>
+              <td className="cell-nowrap">{u.leadLimit ?? 50}</td>
+              <td className="cell-nowrap">{u.leadsRemaining ?? 0}</td>
+              <td className="cell-nowrap">{planLabel(u.plan)}</td>
             </tr>
           ))}
         </DataTable>

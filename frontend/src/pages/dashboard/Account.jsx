@@ -44,7 +44,7 @@ function compressImage(file, maxSize = 400, quality = 0.85) {
 }
 
 export default function Account() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, patchUser } = useAuth();
   const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -100,11 +100,20 @@ export default function Account() {
     e.target.value = '';
   };
 
+  const removePhoto = () => {
+    setForm((prev) => ({ ...prev, avatar: '' }));
+    patchUser({ avatar: '' });
+    setError('');
+    toast.info('Photo removed — click Save Changes to keep it.');
+  };
+
   const save = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await api.updateProfile(form);
+      const payload = { ...form, avatar: form.avatar || '' };
+      const data = await api.updateProfile(payload);
+      patchUser({ avatar: data.user?.avatar || '' });
       await refreshUser();
       toast.success('Profile updated successfully!');
       refreshNotificationBadge();
@@ -178,10 +187,10 @@ export default function Account() {
             <div>
               <p className="font-medium">Profile Photo</p>
               <p className="text-sm text-gray-500 mt-1">PNG or JPG, up to 2MB. Shows in dashboard header.</p>
-              {form.avatar && (
+              {(form.avatar || user?.avatar?.trim()) && (
                 <button
                   type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, avatar: '' }))}
+                  onClick={removePhoto}
                   className="text-xs text-red-600 mt-2 hover:underline"
                 >
                   Remove photo
