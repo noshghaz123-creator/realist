@@ -105,6 +105,9 @@ router.post('/login', async (req, res) => {
     if (!(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Incorrect password. Please try again.' });
     }
+    if (user.blocked && user.role !== 'admin') {
+      return res.status(403).json({ message: 'Your account has been blocked. Please contact support.' });
+    }
     sendUser(user, res);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
     leadLimit: { type: Number, default: 50 },
     leadsUsed: { type: Number, default: 0 },
     leadsRemaining: { type: Number, default: 50 },
+    blocked: { type: Boolean, default: false },
     preferences: {
       emailNotifications: { type: Boolean, default: true },
       smsAlerts: { type: Boolean, default: false },

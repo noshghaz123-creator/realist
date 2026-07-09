@@ -17,8 +17,8 @@ export default function PlanBadge({ plan, className = '' }) {
     <span
       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
         onDemand
-          ? 'bg-violet-50 text-violet-800 border-violet-200'
-          : 'bg-teal-50 text-teal-800 border-teal-200'
+          ? 'bg-purple-50 text-purple-800 border-purple-200'
+          : 'bg-green-50 text-green-800 border-green-200'
       } ${className}`}
     >
       {label}

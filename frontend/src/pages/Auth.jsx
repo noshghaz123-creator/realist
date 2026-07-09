@@ -1,7 +1,33 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Ban, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+function BlockedModal({ open, onClose }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" className="absolute inset-0 bg-black/50" aria-label="Close" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-gray-100 p-6 text-center">
+        <div className="w-12 h-12 mx-auto rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+          <Ban size={24} />
+        </div>
+        <h3 className="text-lg font-bold mt-4">Account Blocked</h3>
+        <p className="text-sm text-gray-600 mt-2">
+          Your account has been blocked by an administrator. Please contact support if you believe this is a mistake.
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 w-full px-4 py-2.5 rounded-xl bg-black text-white text-sm font-semibold hover:bg-gray-800"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function Auth() {
   const [params] = useSearchParams();
@@ -10,6 +36,7 @@ export default function Auth() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [blockedPopup, setBlockedPopup] = useState(false);
   const [form, setForm] = useState({
     name: '', email: '', password: '', phone: '', company: '', location: '',
   });
@@ -34,7 +61,13 @@ export default function Auth() {
       const path = user.role === 'admin' ? '/admin' : user.role === 'team' ? '/team' : '/dashboard';
       navigate(path);
     } catch (err) {
-      setError(err.message);
+      const msg = err.message || 'Request failed';
+      if (msg.toLowerCase().includes('blocked')) {
+        setBlockedPopup(true);
+        setError('');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -42,6 +75,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex">
+      <BlockedModal open={blockedPopup} onClose={() => setBlockedPopup(false)} />
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-600 to-blue-700 text-white p-12 flex-col justify-between">
         <div />
         <div>

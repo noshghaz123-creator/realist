@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { DollarSign, Users, FileText, Mail, UserPlus, BarChart3 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
 import DataTable from '../../components/DataTable';
+import PlanBadge from '../../components/PlanBadge';
 import { api } from '../../api/client';
 import { formatMoney } from '../../utils/format';
-import { planLabel } from '../../components/PlanBadge';
 
 function formatDate(d) {
   if (!d) return '—';
@@ -143,13 +143,20 @@ export default function AdminOverview() {
           emptyMessage="No buyer activity yet."
         >
           {leadUsage.map((u) => (
-            <tr key={u._id}>
-              <td className="font-medium cell-nowrap">{u.name}</td>
+            <tr key={u._id} className={u.blocked ? 'bg-red-50/50' : ''}>
+              <td className="font-medium cell-nowrap">
+                {u.name}
+                {u.blocked && (
+                  <span className="ml-2 text-[10px] font-bold text-red-600">BLOCKED</span>
+                )}
+              </td>
               <td className="text-gray-500 cell-email">{u.email}</td>
               <td className="font-semibold text-teal-700 cell-nowrap">{u.leadsUsed ?? 0}</td>
               <td className="cell-nowrap">{u.leadLimit ?? 50}</td>
               <td className="cell-nowrap">{u.leadsRemaining ?? 0}</td>
-              <td className="cell-nowrap">{planLabel(u.plan)}</td>
+              <td className="cell-nowrap">
+                <PlanBadge plan={u.plan} />
+              </td>
             </tr>
           ))}
         </DataTable>

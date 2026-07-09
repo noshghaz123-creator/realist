@@ -94,6 +94,13 @@ router.put('/users/:id', async (req, res) => {
       updates.leadsRemaining = Math.max(0, Number(req.body.leadsRemaining) || 0);
     }
 
+    if (req.body.blocked !== undefined) {
+      if (existing.role === 'admin') {
+        return res.status(400).json({ message: 'Cannot block an admin account.' });
+      }
+      updates.blocked = Boolean(req.body.blocked);
+    }
+
     const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
     res.json(user);
   } catch (err) {
@@ -104,7 +111,7 @@ router.put('/users/:id', async (req, res) => {
 router.get('/lead-usage', async (_req, res) => {
   try {
     const buyers = await User.find({ role: 'buyer' })
-      .select('name email phone plan leadLimit leadsUsed leadsRemaining createdAt')
+      .select('name email phone plan leadLimit leadsUsed leadsRemaining blocked createdAt')
       .sort({ leadsUsed: -1, createdAt: -1 });
     res.json(buyers);
   } catch (err) {
